@@ -8,6 +8,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
+import static java.lang.Math.pow;
+import static java.lang.Math.sqrt;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
@@ -63,13 +66,23 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     DetectorCollection<H1D> H_LED_VMAX   = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_LED_TCROSS  = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_LED_THALF   = new DetectorCollection<H1D>();
-    DetectorCollection<F1D> mylandau = new DetectorCollection<F1D>();
-    DetectorCollection<F1D> myTimeGauss = new DetectorCollection<F1D>();
     H1D hfADC      = null;
     H1D H_fADC_N   = null;
     H1D H_WMAX     = null;
     H1D H_TCROSS   = null;
     H1D H_LED_N = null;
+    
+    DetectorCollection<F1D> mylandau = new DetectorCollection<F1D>();
+    DetectorCollection<F1D> myTimeGauss = new DetectorCollection<F1D>();
+    
+    DetectorCollection<GraphErrors> G_LED_CHARGE = new DetectorCollection<GraphErrors>();
+    DetectorCollection<ArrayList<Double>> G_LED_EVENT = new DetectorCollection<ArrayList<Double>>();
+    double[] ledCharge;
+    double[] ledCharge2;    
+    int[]    ledEvent;    
+    int[]    ledNEvents;
+    int nLedEvents=100;
+
     double[] crystalID; 
     double[] pedestalMEAN;
     double[] noiseRMS;
@@ -99,10 +112,6 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     int pul_i2 = 60;
     double nsPerSample=4;
     double LSB = 0.4884;
-    int[] cry_event = new int[484];
-    int[] cry_max = new int[484];
-    int[] cry_n = new int[22];
-    int ncry_cosmic = 4;        // number of crystals above threshold in a column for cosmics selection
     double crystal_size = 15;
 
 
@@ -443,6 +452,22 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 H_LED_THALF.get(0, 0, component).setFillColor(5);
                 H_LED_THALF.get(0, 0, component).setXTitle("Time (ns)");
                 H_LED_THALF.get(0, 0, component).setYTitle("Counts"); 
+                // array lists
+                G_LED_CHARGE.add(0,0,component, new GraphErrors());
+                G_LED_CHARGE.get(0, 0, component).setTitle(" "); //  title
+                G_LED_CHARGE.get(0, 0, component).setXTitle("Event");             // X axis title
+                G_LED_CHARGE.get(0, 0, component).setYTitle("LED Charge (pC)");   // Y axis title
+                G_LED_CHARGE.get(0, 0, component).setMarkerColor(2); // color from 0-9 for given palette
+                G_LED_CHARGE.get(0, 0, component).setMarkerSize(5); // size in points on the screen
+                G_LED_CHARGE.get(0, 0, component).setMarkerStyle(1); // Style can be 1 or 2 
+//                A_LED_CHARGE.get(0, 0, component).clear();
+      //          G_LED_EVENT.add(0,0,component, new ArrayList<Double>());
+       //         G_LED_EVENT.get(0, 0, component).clear();
+                ledCharge  = new double[484];
+                ledCharge2 = new double[484];
+                ledEvent   = new int[484];
+                ledNEvents = new int[484];                
+                // fit functions
                 mylandau.add(0, 0, component, new F1D("landau",     0.0, 40.0));
                 myTimeGauss.add(0, 0, component, new F1D("gaus", -20.0, 60.0));
             }
@@ -450,7 +475,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         H_fADC_N   = new H1D("fADC"  , 504, 0, 504);
         H_WMAX     = new H1D("WMAX"  , 504, 0, 504);
         H_TCROSS   = new H1D("TCROSS", 504, 0, 504);
-        H_LED_N = new H1D("EVENT" , 504, 0, 504);
+        H_LED_N    = new H1D("EVENT" , 504, 0, 504);
 
         crystalID       = new double[332];
         pedestalMEAN    = new double[332];
@@ -700,6 +725,31 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 H_LED_VMAX.get(0, 0, key).fill((fadcFitter.getWave_Max()-fadcFitter.getPedestal())*LSB);
                 H_LED_TCROSS.get(0, 0, key).fill(fadcFitter.getTime(3)-tPMTCross);
                 H_LED_THALF.get(0, 0, key).fill(fadcFitter.getTime(7)-tPMTHalf);                
+                // fill info for time dependence evaluation
+                if(doesThisCrystalExist(key)) {
+                    double ledCH = counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50;
+                    if(G_LED_CHARGE.get(0, 0, key)==null) {
+                        ledEvent[key] = nProcessed;
+                    }
+                    if(nProcessed>ledEvent[key]+nLedEvents) {
+                        ledCharge[key]  = ledCharge[key]/ledNEvents[key];
+                        ledCharge2[key] = ledCharge2[key]/ledNEvents[key]; 
+                        double ledX  = ledEvent[key]+nLedEvents/2.;
+                        double ledY  = ledCharge[key];
+                        double ledEX = nLedEvents;
+                        double ledEY = sqrt(ledCharge2[key]-ledCharge[key]*ledCharge[key])/sqrt(ledNEvents[key]);
+                        G_LED_CHARGE.get(0, 0, key).add(ledX,ledY,ledEX,ledEY);
+                        ledEvent[key]   = nProcessed;
+                        ledCharge[key]  = ledCH;
+                        ledCharge2[key] = ledCH*ledCH;
+                        ledNEvents[key] = 1;
+                    }
+                    else {
+                        ledCharge[key]  += ledCH;
+                        ledCharge2[key] += ledCH*ledCH;
+                        ledNEvents[key]++;
+                    }
+                }
             }
         }
         if (plotSelect == 0 && H_WAVE.hasEntry(0, 0, keySelect)) {
@@ -740,7 +790,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         GraphErrors  G_PED = new GraphErrors(crystalID,pedestalMEAN);
         G_PED.setTitle(" "); //  title
         G_PED.setXTitle("Crystal ID"); // X axis title
-        G_PED.setYTitle("Noise RMS (mV)");   // Y axis title
+        G_PED.setYTitle("Pedestal (Counts)");   // Y axis title
         G_PED.setMarkerColor(2); // color from 0-9 for given palette
         G_PED.setMarkerSize(5); // size in points on the screen
         G_PED.setMarkerStyle(1); // Style can be 1 or 2
@@ -765,23 +815,21 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         }
         // Energy - Cosmics for now
         canvasEnergy.cd(0);
-        if (H_fADC.hasEntry(0, 0, keySelect)) {
-            hfADC = H_fADC.get(0, 0, keySelect).histClone(" ");
-            hfADC.normalize(H_fADC_N.getBinContent(keySelect));
+        if (H_LED_fADC.hasEntry(0, 0, keySelect)) {
+            if(H_LED_N.getBinContent(keySelect)>0) {
+                hfADC = H_LED_fADC.get(0, 0, keySelect).histClone(" ");
+                hfADC.normalize(H_LED_N.getBinContent(keySelect));
+            }
+            else {
+                hfADC= new H1D("fADC", 100, 0.0, 100.0);
+            }
             hfADC.setFillColor(3);
             hfADC.setXTitle("fADC Sample");
             hfADC.setYTitle("fADC Counts");
             canvasEnergy.draw(hfADC);               
         }
         canvasEnergy.cd(1);
-        if (H_LED_fADC.hasEntry(0, 0, keySelect)) {
-            hfADC = H_LED_fADC.get(0, 0, keySelect).histClone(" ");
-            hfADC.normalize(H_LED_N.getBinContent(keySelect));
-            hfADC.setFillColor(3);
-            hfADC.setXTitle("fADC Sample");
-            hfADC.setYTitle("fADC Counts");
-            canvasEnergy.draw(hfADC);               
-        }
+        canvasEnergy.draw(G_LED_CHARGE.get(0, 0, keySelect));
         canvasEnergy.cd(2);
         if(H_LED_VMAX.hasEntry(0, 0, keySelect)) {
             H1D hcosmic = H_LED_VMAX.get(0,0,keySelect);
@@ -925,7 +973,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 summaryTable.setValueAtAsDouble(5, Double.parseDouble(stime)   , 0, 0, key);                
             }            
         }
-        summaryTable.show();
+//        summaryTable.show();
     }
 
 
