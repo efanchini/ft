@@ -437,7 +437,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 H_COSMIC_TCROSS.get(0, 0, component).setFillColor(5);
                 H_COSMIC_TCROSS.get(0, 0, component).setXTitle("Time (ns)");
                 H_COSMIC_TCROSS.get(0, 0, component).setYTitle("Counts");
-                H_COSMIC_THALF.add(0, 0, component, new H1D("T_TRIG_" + component, title, 80,-20.0, 60.0));
+                H_COSMIC_THALF.add(0, 0, component, new H1D("T_HALF_" + component, title, 80,-20.0, 60.0));
                 H_COSMIC_THALF.get(0, 0, component).setFillColor(5);
                 H_COSMIC_THALF.get(0, 0, component).setXTitle("Time (ns)");
                 H_COSMIC_THALF.get(0, 0, component).setYTitle("Counts"); 

@@ -82,11 +82,10 @@ public class FTViewerModule implements IDetectorProcessor, IDetectorModule, IDet
         this.FTCALPanel = new JPanel(new BorderLayout());
 
         this.tabbedPane = new JTabbedPane();
-        tabbedPane.add("FT-HODO",this.FTHODOPanel);
-	tabbedPane.add("FT-CAL",this.FTCALPanel);
-        
         tabbedPane.add("FT",this.FTview);
-  
+        tabbedPane.add("FT-HODO",this.FTHODOPanel);
+	tabbedPane.add("FT-CAL",this.FTCALPanel);   
+    
         this.FTview.setLeftComponent(this.FTview1);
         this.FTview.setRightComponent(this.FTview2);
         FTview.setDividerLocation(750);
