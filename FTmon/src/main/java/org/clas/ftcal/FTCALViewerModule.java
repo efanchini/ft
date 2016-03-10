@@ -296,7 +296,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         this.canvas.divide(1, 1);
         canvas.cd(0);
     }
-    
+
     private void initTable() {
         summaryTable = new HashTable(3,"Pedestal:d","Noise:i","Energy Mean:d","Energy Sigma:d","Energy Chi2:d","Time Mean:d","Time Sigma:d");
         double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1};
@@ -502,7 +502,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         myTimeGauss.get(0, 0, key).setParameter(1, hMean);       
         myTimeGauss.get(0, 0, key).setParameter(2, 2.);
     }    
-    
+
     private void fitHistograms() {
         for(int key=0; key< 22*22; key++) {
             if(H_COSMIC_CHARGE.hasEntry(0, 0, key)) {

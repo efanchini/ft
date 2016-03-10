@@ -43,10 +43,10 @@ public class FTViewerModule implements IDetectorProcessor, IDetectorModule, IDet
         
     DetectorEventProcessorPane evPane = new DetectorEventProcessorPane();
    
-   
+    
     EventDecoder decoder = new EventDecoder();
     int nProcessed = 0;
- 
+    
     
     
     // ColorPalette class defines colors 
@@ -80,15 +80,17 @@ public class FTViewerModule implements IDetectorProcessor, IDetectorModule, IDet
         
         this.FTHODOPanel = new JPanel(new BorderLayout());
         this.FTCALPanel = new JPanel(new BorderLayout());
-               
+
         this.tabbedPane = new JTabbedPane();
-        tabbedPane.add("FT-CAL",this.FTCALPanel);
         tabbedPane.add("FT-HODO",this.FTHODOPanel);
-        tabbedPane.add("FT",this.FTview);
+	tabbedPane.add("FT-CAL",this.FTCALPanel);
         
+        tabbedPane.add("FT",this.FTview);
+  
         this.FTview.setLeftComponent(this.FTview1);
         this.FTview.setRightComponent(this.FTview2);
-                
+        FTview.setDividerLocation(750);
+	
         // filling main panel with tabs for different FT subdetectors and event handling panel
         this.detectorPanel.add(tabbedPane, BorderLayout.CENTER);
         this.detectorPanel.add(this.evPane, BorderLayout.PAGE_END);
@@ -117,7 +119,6 @@ public class FTViewerModule implements IDetectorProcessor, IDetectorModule, IDet
     }
 
     private void initHistograms() {
-
       
         moduleFTCAL.initHistograms();
         moduleFTHODO.initHistograms();
@@ -135,14 +136,14 @@ public class FTViewerModule implements IDetectorProcessor, IDetectorModule, IDet
     
     public void processEvent(DataEvent de) {
         EvioDataEvent event = (EvioDataEvent) de;
-
+        
         
         decoder.decode(event);
         nProcessed++;
         
         moduleFTCAL.processDecodedEvent();        
         moduleFTHODO.processDecodedEvent();
-        
+    
         this.FTview.repaint();
     }
 
