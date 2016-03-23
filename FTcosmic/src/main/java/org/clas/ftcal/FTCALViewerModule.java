@@ -52,7 +52,15 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     EmbeddedCanvas canvasTime      = new EmbeddedCanvas();
     DetectorShapeTabView view = new DetectorShapeTabView();
     HashTable  summaryTable   = null; 
-    
+    JPanel radioPane = new JPanel();
+    JRadioButton statRb  = new JRadioButton("Status");
+    JRadioButton pedRb   = new JRadioButton("Pedestal");
+    JRadioButton rmsRb   = new JRadioButton("RMS");
+    JRadioButton occRb   = new JRadioButton("Occupancy");
+    JRadioButton meanRb  = new JRadioButton("Mean");
+    JRadioButton sigmaRb = new JRadioButton("Sigma");
+    JRadioButton chi2Rb  = new JRadioButton("Chi2");
+
     // histograms, functions and graphs
     DetectorCollection<H1D> H_fADC = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_WAVE = new DetectorCollection<H1D>();
@@ -107,7 +115,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
 
     // control variables
-    private int plotSelect = 0;  // 0 - waveforms, 1 - noise
+    private int plotSelect = 0;  
+    private int drawSelect = 0;
     private int keySelect = 8;
 
     
@@ -146,45 +155,53 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         this.initCanvas();
         
         JPanel canvasPane = new JPanel();
-
         canvasPane.setLayout(new BorderLayout());
+
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new FlowLayout());
-
         JButton resetBtn = new JButton("Clear Histograms");
         resetBtn.addActionListener(this);
         buttonPane.add(resetBtn);
-
         JButton fitBtn = new JButton("Fit Histograms");
         fitBtn.addActionListener(this);
         buttonPane.add(fitBtn);
-
         JButton tableBtn = new JButton("Update Summary");
         tableBtn.addActionListener(this);
         buttonPane.add(tableBtn);
 
-        JRadioButton wavesRb  = new JRadioButton("Waveforms");
-        JRadioButton noiseRb  = new JRadioButton("Noise");
-        JRadioButton cosmicOccRb = new JRadioButton("Cosmics(Occ)");
-        JRadioButton cosmicCrgRb = new JRadioButton("Cosmics(Fit)");
+//        JPanel viewPane = new JPanel();
+//        viewPane.setLayout(new BorderLayout());
+        
         ButtonGroup group = new ButtonGroup();
-        group.add(wavesRb);
-        group.add(noiseRb);
-        group.add(cosmicOccRb);
-        group.add(cosmicCrgRb);
-//        buttonPane.add(wavesRb);
-//        buttonPane.add(noiseRb);
-//        buttonPane.add(cosmicOccRb);
-//        buttonPane.add(cosmicCrgRb);
-        wavesRb.setSelected(true);
-        wavesRb.addActionListener(this);
-        noiseRb.addActionListener(this);
-        cosmicOccRb.addActionListener(this);
-        cosmicCrgRb.addActionListener(this);
 
+        group.add(statRb);
+        group.add(pedRb);
+        group.add(rmsRb);
+        group.add(occRb);
+        group.add(meanRb);
+        group.add(sigmaRb);
+        group.add(chi2Rb);
+        statRb.setSelected(true);
+        statRb.addActionListener(this);
+        pedRb.addActionListener(this);
+        rmsRb.addActionListener(this);
+        occRb.addActionListener(this);
+        meanRb.addActionListener(this);
+        sigmaRb.addActionListener(this);
+        chi2Rb.addActionListener(this);
+        radioPane.setLayout(new FlowLayout());       
+        radioPane.add(statRb);
+        radioPane.add(pedRb);
+        radioPane.add(rmsRb);
+         
         canvasPane.add(tabbedPane, BorderLayout.CENTER);
         canvasPane.add(buttonPane, BorderLayout.PAGE_END);
     
+//        viewPane.add(this.view, BorderLayout.CENTER);
+//        viewPane.add(radioPane, BorderLayout.PAGE_END);
+        view.add(radioPane, BorderLayout.PAGE_END);
+        radioPane.setVisible(false);
+        
         splitPane.setLeftComponent(this.view);
         splitPane.setRightComponent(canvasPane);
  
@@ -333,8 +350,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         }  
         for(int ipaddle=0; ipaddle<4; ipaddle++) {
             DetectorShape2D paddle = new DetectorShape2D(DetectorType.FTCAL, 0, 0, 501+ipaddle);
-            paddle.createBarXY(crystal_size*11, crystal_size/2.);
-            paddle.getShapePath().translateXYZ(crystal_size*11/2.*(((int) ipaddle/2)*2+1),crystal_size*(22+2)*(ipaddle % 2),0.0);
+            paddle.createBarXY(crystal_size*22, crystal_size/2.);
+            paddle.getShapePath().translateXYZ(crystal_size*11.,crystal_size*(22+2)*(ipaddle % 2)+crystal_size/4.*(((int) ipaddle/2)*2-1),0.0);
             paddle.setColor(0, 145, 0);
             viewFTCAL.addShape(paddle);
         }
@@ -360,26 +377,31 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         // TODO Auto-generated method stub
         System.out.println("FTCALViewerModule ACTION = " + e.getActionCommand());
         if (e.getActionCommand().compareTo("Clear Histograms") == 0) {
-            resetHistograms();
+            this.resetHistograms();
         }
         if (e.getActionCommand().compareTo("Fit Histograms") == 0) {
-            fitHistograms();
+            this.fitHistograms();
         }
         if (e.getActionCommand().compareTo("Update Summary") == 0) {
-            updateTable();
+            this.updateTable();
         }
 
-//        if (e.getActionCommand().compareTo("Waveforms") == 0) {
-//            plotSelect = 0;
-//            resetCanvas();
-//        } else if (e.getActionCommand().compareTo("Noise") == 0) {
-//            plotSelect = 1;
-//        } else if (e.getActionCommand().compareTo("Cosmics(Occ)") == 0) {
-//            plotSelect = 2;
-//        } else if (e.getActionCommand().compareTo("Cosmics(Fit)") == 0) {
-//            plotSelect = 3;
-//        }
-
+        if (e.getActionCommand().compareTo("Status") == 0) {
+            drawSelect = 0;
+        } else if (e.getActionCommand().compareTo("Pedestal") == 0) {
+            drawSelect = 1;
+        } else if (e.getActionCommand().compareTo("RMS") == 0) {
+            drawSelect = 2;
+        } else if (e.getActionCommand().compareTo("Occupancy") == 0) {
+            drawSelect = 3;
+        } else if (e.getActionCommand().compareTo("Mean") == 0) {
+            drawSelect = 4;
+        } else if (e.getActionCommand().compareTo("Sigma") == 0) {
+            drawSelect = 5;
+        } else if (e.getActionCommand().compareTo("Chi2") == 0) {
+            drawSelect = 6;
+        }
+        this.view.repaint();
     }
 
      public void stateChanged(ChangeEvent e) {
@@ -387,13 +409,44 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         int index = sourceTabbedPane.getSelectedIndex();
         System.out.println("Tab changed to: " + sourceTabbedPane.getTitleAt(index) + " with index " + index);
         plotSelect = index;
-        if(index==4) this.updateTable();
+        this.updateRb(index);
         this.view.repaint();
     }
 
+    public void updateRb(int rbKey) {
+        if(rbKey==0 || rbKey==4) {
+            radioPane.setVisible(false);
+        }
+        else {
+            if(rbKey==1) {
+                radioPane.removeAll();
+                radioPane.add(statRb);
+                radioPane.add(pedRb);
+                radioPane.add(rmsRb);
+                if(drawSelect>2) statRb.setSelected(true);
+                else if(drawSelect==0) statRb.setSelected(true);
+                else if(drawSelect==1) pedRb.setSelected(true);
+                else if(drawSelect==2) rmsRb.setSelected(true);
+           }
+            else if(rbKey==2 || rbKey==3) {
+                radioPane.removeAll();
+                radioPane.add(occRb);
+                radioPane.add(meanRb);
+                radioPane.add(sigmaRb);                
+                radioPane.add(chi2Rb); 
+                if(drawSelect<3) occRb.setSelected(true);
+                else if(drawSelect==3) occRb.setSelected(true);
+                else if(drawSelect==4) meanRb.setSelected(true);
+                else if(drawSelect==5) sigmaRb.setSelected(true);
+                else if(drawSelect==6) chi2Rb.setSelected(true);
+            } 
+            radioPane.setVisible(true);
+        }
+    } 
+     
     public void initHistograms() {
         for (int component = 0; component < 505; component++) {
-            if(doesThisCrystalExist(component) || component>500) {
+            if(doesThisCrystalExist(component) || component>499) {
 
                 int iy = component / 22;
                 int ix = component - iy * 22;
@@ -492,7 +545,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
     private void initTimeGaussFitPar(int key, H1D htime) {
         double hAmp  = htime.getBinContent(htime.getMaximumBin());
-        double hMean = htime.getMean();
+        double hMean = htime.getAxis().getBinCenter(htime.getMaximumBin());
         double hRMS  = htime.getRMS();        
         double rangeMin = hMean - 3*hRMS; 
         double rangeMax = hMean + 3*hRMS;         
@@ -512,7 +565,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                     hcosmic.fit(mylandau.get(0, 0, key),"L");
                     H1D htime = H_COSMIC_THALF.get(0,0,key);
                     initTimeGaussFitPar(key,htime);
-                    htime.fit(myTimeGauss.get(0, 0, key),"L");
+                    htime.fit(myTimeGauss.get(0, 0, key),"N");
                 }
             }   
         }
@@ -703,9 +756,9 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             int i1=(int) max(0,iy-ncry_cosmic-1);    // allowing for +/- to cope with dead channels
             int i2=(int) min(22,iy+ncry_cosmic+1);
             for(int i=i1; i<=i2; i++) {
-                threshold=12;
-                if(ix==-9 && (i==-6 || i==-5 || i==-4 || i==-3 || i==-2 || i==-1)) threshold=4;
-                if(ix==-9 && (i== 6 ||          i==4  || i==3  || i==2  || i==1)) threshold=6;
+//                threshold=12;
+//                if(ix==-9 && (i==-6 || i==-5 || i==-4 || i==-3 || i==-2 || i==-1)) threshold=4;
+//                if(ix==-9 && (i== 6 ||          i==4  || i==3  || i==2  || i==1)) threshold=6;
                 if(i!=iy && doesThisCrystalExist(i*22+ix)) {
 //                    System.out.println(ix + " " + iy + " " + i1 + " " + i2 + " " + i + " " +H_WMAX.getBinContent(i*22+ix));
 //                    if(H_WMAX.getBinContent(i*22+ix)>threshold && H_TCROSS.getBinContent(i*22+ix)>0) nCrystalInColumn++;                    
@@ -850,7 +903,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         if(H_COSMIC_THALF.hasEntry(0, 0, keySelect)) {
             H1D htime = H_COSMIC_THALF.get(0, 0, keySelect);
             initTimeGaussFitPar(keySelect,htime);
-            htime.fit(myTimeGauss.get(0, 0, keySelect),"L");
+            htime.fit(myTimeGauss.get(0, 0, keySelect),"N");
             canvasTime.draw(htime,"S");
             canvasTime.draw(myTimeGauss.get(0, 0, keySelect),"sameS");
         }
@@ -880,20 +933,26 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         else if(plotSelect==1) {
             if (this.H_fADC.hasEntry(sector, layer, paddle)) {
                 int nent = this.H_fADC.get(sector, layer, paddle).getEntries();
-                //            Color col = palette.getColor3D(nent, nProcessed, true);           
-                /*int colorRed = 240;
-                 if(nProcessed!=0){
-                 colorRed = (255*nent)/(nProcessed);
-                 }*/
-                //            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
                 if (nent > 0) {
-                    if (this.H_NOISE.get(sector, layer, paddle).getMean() > 1.0
-                            && this.H_NOISE.get(sector, layer, paddle).getMean() < 1.5) {
-                        shape.setColor(0, 145, 0);
-                    } else if (this.H_NOISE.get(sector, layer, paddle).getMean() < 1.0) {
-                        shape.setColor(0, 0, 100);
-                    } else {
-                        shape.setColor(255, 100, 0);
+                    if(drawSelect==1) {
+                        double cvalue = this.H_PED.get(sector, layer, paddle).getMean();
+                        Color col = palette.getColor3D(cvalue, 400., true);           
+                        shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+                    }
+                    else if(drawSelect==2) {
+                        double cvalue = this.H_NOISE.get(sector, layer, paddle).getMean();
+                        Color col = palette.getColor3D(cvalue, 2., true);           
+                        shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                        
+                    }
+                    else {
+                        if (this.H_NOISE.get(sector, layer, paddle).getMean() > 1.0
+                                && this.H_NOISE.get(sector, layer, paddle).getMean() < 1.5) {
+                            shape.setColor(0, 145, 0);
+                        } else if (this.H_NOISE.get(sector, layer, paddle).getMean() < 1.0) {
+                            shape.setColor(0, 0, 100);
+                        } else {
+                            shape.setColor(255, 100, 0);
+                        }
                     }
                 } else {
                     shape.setColor(100, 100, 100);
@@ -902,30 +961,59 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         }
         else if(plotSelect==2) {
             if (this.H_COSMIC_CHARGE.hasEntry(sector, layer, paddle)) {
-                if(plotSelect==2) {
-                    int nent = this.H_COSMIC_CHARGE.get(sector, layer, paddle).getEntries();
-                    Color col = palette.getColor3D(nent, nProcessed, true);           
-                    /*int colorRed = 240;
-                 if(nProcessed!=0){
-                 colorRed = (255*nent)/(nProcessed);
-                 }*/
-                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
-                }
-                else if(plotSelect==3){
+                if(drawSelect==4) {
                     double lmean = this.mylandau.get(sector, layer, paddle).getParameter(1);
                     Color col = palette.getColor3D(lmean, 80., true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
+                }
+                else if(drawSelect==5) {
+                    double lsigma = this.mylandau.get(sector, layer, paddle).getParameter(2);
+                    Color col = palette.getColor3D(lsigma, 10., true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
+                }
+                else if(drawSelect==6) {
+                    double lchi2 = this.mylandau.get(sector, layer, paddle).getChiSquare(H_COSMIC_CHARGE.get(sector, layer, paddle).getDataSet())
+                                 /mylandau.get(sector, layer, paddle).getNDF(H_COSMIC_CHARGE.get(sector, layer, paddle).getDataSet());
+                    Color col = palette.getColor3D(lchi2, 20., true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
+                }
+                else {
+                    int nent = this.H_COSMIC_CHARGE.get(sector, layer, paddle).getEntries();
+                    Color col = palette.getColor3D(nent, nProcessed, true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
                 }
             }
         }
         else if(plotSelect==3) {
             if (this.H_COSMIC_THALF.hasEntry(sector, layer, paddle)) {
-                int nent = this.H_COSMIC_THALF.get(sector, layer, paddle).getEntries();
-                Color col = palette.getColor3D(nent, nProcessed, true); 
-                shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+                if(drawSelect==4) {
+                    double lmean = this.myTimeGauss.get(sector, layer, paddle).getParameter(1);
+                    Color col = palette.getColor3D(lmean, 80., true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
+                }
+                else if(drawSelect==5) {
+                    double lsigma = this.myTimeGauss.get(sector, layer, paddle).getParameter(2);
+                    Color col = palette.getColor3D(lsigma, 10., true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
+                }
+                else if(drawSelect==6) {
+                    double lchi2 = this.myTimeGauss.get(sector, layer, paddle).getChiSquare(H_COSMIC_THALF.get(sector, layer, paddle).getDataSet())
+                                 /myTimeGauss.get(sector, layer, paddle).getNDF(H_COSMIC_THALF.get(sector, layer, paddle).getDataSet());
+                    Color col = palette.getColor3D(lchi2, 20., true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
+                }
+                else {
+                    int nent = this.H_COSMIC_THALF.get(sector, layer, paddle).getEntries();
+                    Color col = palette.getColor3D(nent, nProcessed, true);           
+                    shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+                }
             }
         }
         else if(plotSelect==4) {
+            this.updateTable();
+            double lmean = this.mylandau.get(sector, layer, paddle).getParameter(1);
+            Color col = palette.getColor3D(lmean, 80., true);           
+            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
 
         }
     }
@@ -952,7 +1040,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 summaryTable.setValueAtAsDouble(6, Double.parseDouble(stime)   , 0, 0, key);                
             }            
         }
-        summaryTable.show();
+//        summaryTable.show();
     }
 
 
