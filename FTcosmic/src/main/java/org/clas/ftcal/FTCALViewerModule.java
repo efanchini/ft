@@ -6,12 +6,14 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.util.List;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSplitPane;
@@ -45,21 +47,18 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     // panels and canvases
     JPanel detectorPanel;
     ColorPalette palette = new ColorPalette();
-    EmbeddedCanvas canvas = new EmbeddedCanvas();
     EmbeddedCanvas canvasEvent     = new EmbeddedCanvas();
     EmbeddedCanvas canvasNoise     = new EmbeddedCanvas();
     EmbeddedCanvas canvasEnergy    = new EmbeddedCanvas();
     EmbeddedCanvas canvasTime      = new EmbeddedCanvas();
     DetectorShapeTabView view = new DetectorShapeTabView();
     HashTable  summaryTable   = null; 
-    JPanel radioPane = new JPanel();
-    JRadioButton statRb  = new JRadioButton("Status");
-    JRadioButton pedRb   = new JRadioButton("Pedestal");
-    JRadioButton rmsRb   = new JRadioButton("RMS");
-    JRadioButton occRb   = new JRadioButton("Occupancy");
-    JRadioButton meanRb  = new JRadioButton("Mean");
-    JRadioButton sigmaRb = new JRadioButton("Sigma");
-    JRadioButton chi2Rb  = new JRadioButton("Chi2");
+    JPanel radioPane      = new JPanel();
+    JPanel radioPaneNoise = new JPanel();
+    JPanel radioPaneFits  = new JPanel();
+    
+    // file chooser
+    JFileChooser fc = new JFileChooser();
 
     // histograms, functions and graphs
     DetectorCollection<H1D> H_fADC = new DetectorCollection<H1D>();
@@ -165,42 +164,63 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         JButton fitBtn = new JButton("Fit Histograms");
         fitBtn.addActionListener(this);
         buttonPane.add(fitBtn);
-        JButton tableBtn = new JButton("Update Summary");
-        tableBtn.addActionListener(this);
-        buttonPane.add(tableBtn);
+        JButton fileBtn = new JButton("Save to File");
+        fileBtn.addActionListener(this);
+        buttonPane.add(fileBtn);
 
 //        JPanel viewPane = new JPanel();
 //        viewPane.setLayout(new BorderLayout());
         
-        ButtonGroup group = new ButtonGroup();
-
-        group.add(statRb);
-        group.add(pedRb);
-        group.add(rmsRb);
-        group.add(occRb);
-        group.add(meanRb);
-        group.add(sigmaRb);
-        group.add(chi2Rb);
+        JRadioButton statRb  = new JRadioButton("Status");
+        JRadioButton pedRb   = new JRadioButton("Pedestal");
+        JRadioButton rmsRb   = new JRadioButton("RMS");
+        ButtonGroup groupNoise = new ButtonGroup();
+        groupNoise.add(statRb);
+        groupNoise.add(pedRb);
+        groupNoise.add(rmsRb);
         statRb.setSelected(true);
         statRb.addActionListener(this);
         pedRb.addActionListener(this);
         rmsRb.addActionListener(this);
+        
+        JRadioButton occRb   = new JRadioButton("Occupancy");
+        JRadioButton meanRb  = new JRadioButton("Mean");
+        JRadioButton sigmaRb = new JRadioButton("Sigma");
+        JRadioButton chi2Rb  = new JRadioButton("Chi2");
+        ButtonGroup groupFits = new ButtonGroup();
+        groupFits.add(occRb);
+        groupFits.add(meanRb);
+        groupFits.add(sigmaRb);
+        groupFits.add(chi2Rb);
+        occRb.setSelected(true);
         occRb.addActionListener(this);
         meanRb.addActionListener(this);
         sigmaRb.addActionListener(this);
         chi2Rb.addActionListener(this);
-        radioPane.setLayout(new FlowLayout());       
-        radioPane.add(statRb);
-        radioPane.add(pedRb);
-        radioPane.add(rmsRb);
-         
+        
+        radioPaneNoise.setLayout(new FlowLayout());       
+        radioPaneNoise.add(statRb);
+        radioPaneNoise.add(pedRb);
+        radioPaneNoise.add(rmsRb);
+        
+        radioPaneFits.setLayout(new FlowLayout());       
+        radioPaneFits.add(occRb);
+        radioPaneFits.add(meanRb);
+        radioPaneFits.add(sigmaRb);         
+        radioPaneFits.add(chi2Rb);         
+ 
+        radioPane.add(radioPaneNoise);
+        radioPane.add(radioPaneFits);
+        radioPaneNoise.setVisible(false);
+        radioPaneFits.setVisible(false);
+        
         canvasPane.add(tabbedPane, BorderLayout.CENTER);
         canvasPane.add(buttonPane, BorderLayout.PAGE_END);
     
 //        viewPane.add(this.view, BorderLayout.CENTER);
 //        viewPane.add(radioPane, BorderLayout.PAGE_END);
         view.add(radioPane, BorderLayout.PAGE_END);
-        radioPane.setVisible(false);
+//        view.add(radioPaneFits, BorderLayout.PAGE_END);
         
         splitPane.setLeftComponent(this.view);
         splitPane.setRightComponent(canvasPane);
@@ -309,20 +329,20 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         this.canvasTime.setStatBoxFontSize(8);
     }
 
-    private void resetCanvas() {
-        this.canvas.divide(1, 1);
-        canvas.cd(0);
-    }
+//    private void resetCanvas() {
+//        this.canvas.divide(1, 1);
+//        canvas.cd(0);
+//    }
 
     private void initTable() {
-        summaryTable = new HashTable(3,"Pedestal:d","Noise:i","Energy Mean:d","Energy Sigma:d","Energy Chi2:d","Time Mean:d","Time Sigma:d");
-        double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1};
+        summaryTable = new HashTable(3,"Pedestal:d","Noise:i","N. Events:i","Energy Mean:d","Energy Sigma:d","Energy Chi2:d","Time Mean:d","Time Sigma:d");
+        double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1, -1};
         for (int component = 0; component < 22*22; component++) {
             if(doesThisCrystalExist(component)) {
                 summaryTable.addRow(summaryInitialValues,0,0,component);
                 summaryTable.addConstrain(3, 160.0, 240.0);
                 summaryTable.addConstrain(4, 1.0, 1.5); 
-                summaryTable.addConstrain(5, 5.0, 25.); 
+                summaryTable.addConstrain(6, 5.0, 25.); 
             }
         }
     }
@@ -382,8 +402,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         if (e.getActionCommand().compareTo("Fit Histograms") == 0) {
             this.fitHistograms();
         }
-        if (e.getActionCommand().compareTo("Update Summary") == 0) {
-            this.updateTable();
+        if (e.getActionCommand().compareTo("Save to File") == 0) {
+            this.saveToFile();
         }
 
         if (e.getActionCommand().compareTo("Status") == 0) {
@@ -409,40 +429,10 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         int index = sourceTabbedPane.getSelectedIndex();
         System.out.println("Tab changed to: " + sourceTabbedPane.getTitleAt(index) + " with index " + index);
         plotSelect = index;
-        this.updateRb(index);
+        this.updateTable();
         this.view.repaint();
     }
 
-    public void updateRb(int rbKey) {
-        if(rbKey==0 || rbKey==4) {
-            radioPane.setVisible(false);
-        }
-        else {
-            if(rbKey==1) {
-                radioPane.removeAll();
-                radioPane.add(statRb);
-                radioPane.add(pedRb);
-                radioPane.add(rmsRb);
-                if(drawSelect>2) statRb.setSelected(true);
-                else if(drawSelect==0) statRb.setSelected(true);
-                else if(drawSelect==1) pedRb.setSelected(true);
-                else if(drawSelect==2) rmsRb.setSelected(true);
-           }
-            else if(rbKey==2 || rbKey==3) {
-                radioPane.removeAll();
-                radioPane.add(occRb);
-                radioPane.add(meanRb);
-                radioPane.add(sigmaRb);                
-                radioPane.add(chi2Rb); 
-                if(drawSelect<3) occRb.setSelected(true);
-                else if(drawSelect==3) occRb.setSelected(true);
-                else if(drawSelect==4) meanRb.setSelected(true);
-                else if(drawSelect==5) sigmaRb.setSelected(true);
-                else if(drawSelect==6) chi2Rb.setSelected(true);
-            } 
-            radioPane.setVisible(true);
-        }
-    } 
      
     public void initHistograms() {
         for (int component = 0; component < 505; component++) {
@@ -777,9 +767,6 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 H_COSMIC_THALF.get(0, 0, key).fill(fadcFitter.getTime(7)-tPMTHalf);                
             }
         }
-        if (plotSelect == 0 && H_WAVE.hasEntry(0, 0, keySelect)) {
-            this.canvas.draw(H_WAVE.get(0, 0, keySelect));            
-        }
         this.canvasEvent.draw(H_WAVE.get(0, 0, keySelect)); 
         //this.dcHits.show();
         this.view.repaint();
@@ -787,18 +774,6 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
     }
     
-    public Color getComponentStatus(int key) {
-        Color col = new Color(100,100,100);
-        if(H_WMAX.getBinContent(key)>threshold) {
-            if(H_TCROSS.getBinContent(key)>0) {
-                col = palette.getColor3D(H_WMAX.getBinContent(key), 4000, true); 
-            }
-//            else {
-//                col = new Color(200, 0, 200);
-//            }
-        }
-        return col;
-    }
     
     public void detectorSelected(DetectorDescriptor desc) {
         // TODO Auto-generated method stub
@@ -912,12 +887,13 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
     public void update(DetectorShape2D shape) {
     
-
         int sector = shape.getDescriptor().getSector();
         int layer = shape.getDescriptor().getLayer();
         int paddle = shape.getDescriptor().getComponent();
         //shape.setColor(200, 200, 200);
         if(plotSelect==0) {
+            radioPaneNoise.setVisible(false);
+            radioPaneFits.setVisible(false);
             if(H_WMAX.getBinContent(paddle)>threshold) {
                 if(H_TCROSS.getBinContent(paddle)>0) {
                     shape.setColor(140, 0, 200);
@@ -931,6 +907,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             }
         }
         else if(plotSelect==1) {
+            radioPaneNoise.setVisible(true);
+            radioPaneFits.setVisible(false);
             if (this.H_fADC.hasEntry(sector, layer, paddle)) {
                 int nent = this.H_fADC.get(sector, layer, paddle).getEntries();
                 if (nent > 0) {
@@ -960,6 +938,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             }
         }
         else if(plotSelect==2) {
+            radioPaneNoise.setVisible(false);
+            radioPaneFits.setVisible(true);
             if (this.H_COSMIC_CHARGE.hasEntry(sector, layer, paddle)) {
                 if(drawSelect==4) {
                     double lmean = this.mylandau.get(sector, layer, paddle).getParameter(1);
@@ -985,6 +965,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             }
         }
         else if(plotSelect==3) {
+            radioPaneNoise.setVisible(false);
+            radioPaneFits.setVisible(true);
             if (this.H_COSMIC_THALF.hasEntry(sector, layer, paddle)) {
                 if(drawSelect==4) {
                     double lmean = this.myTimeGauss.get(sector, layer, paddle).getParameter(1);
@@ -1010,11 +992,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             }
         }
         else if(plotSelect==4) {
-            this.updateTable();
-            double lmean = this.mylandau.get(sector, layer, paddle).getParameter(1);
-            Color col = palette.getColor3D(lmean, 80., true);           
-            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
-
+            radioPaneNoise.setVisible(false);
+            radioPaneFits.setVisible(false);
         }
     }
 
@@ -1023,6 +1002,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             if(doesThisCrystalExist(key)) {
                 String pedestal = String.format ("%.1f", H_PED.get(0, 0, key).getMean());
                 String noise    = String.format ("%.2f", H_NOISE.get(0, 0, key).getMean());
+                String nev      = String.format ("%d",   H_COSMIC_CHARGE.get(0,0,key).getEntries());
                 String mips     = String.format ("%.2f", mylandau.get(0, 0, key).getParameter(1));
                 String emips    = String.format ("%.2f", mylandau.get(0, 0, key).parameter(1).error());
                 String chi2     = String.format ("%.1f", mylandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key).getDataSet())
@@ -1033,15 +1013,25 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 
                 summaryTable.setValueAtAsDouble(0, Double.parseDouble(pedestal), 0, 0, key);
                 summaryTable.setValueAtAsDouble(1, Double.parseDouble(noise)   , 0, 0, key);
-                summaryTable.setValueAtAsDouble(2, Double.parseDouble(mips)    , 0, 0, key);
-                summaryTable.setValueAtAsDouble(3, Double.parseDouble(emips)   , 0, 0, key);
-                summaryTable.setValueAtAsDouble(4, Double.parseDouble(chi2)    , 0, 0, key);
-                summaryTable.setValueAtAsDouble(5, Double.parseDouble(time)    , 0, 0, key);
-                summaryTable.setValueAtAsDouble(6, Double.parseDouble(stime)   , 0, 0, key);                
+                summaryTable.setValueAtAsDouble(2, Double.parseDouble(nev)     , 0, 0, key);
+                summaryTable.setValueAtAsDouble(3, Double.parseDouble(mips)    , 0, 0, key);
+                summaryTable.setValueAtAsDouble(4, Double.parseDouble(emips)   , 0, 0, key);
+                summaryTable.setValueAtAsDouble(5, Double.parseDouble(chi2)    , 0, 0, key);
+                summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 0, 0, key);
+                summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 0, 0, key);                
             }            
         }
 //        summaryTable.show();
     }
 
 
+    private void saveToFile() {
+        this.fc.setCurrentDirectory(new File("calibfiles"));
+	int returnValue = fc.showSaveDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            String outputFileName = fc.getSelectedFile().getAbsolutePath();
+            System.out.println("Saving calibration results to: " + outputFileName);
+        }
+    }
+    
 }
