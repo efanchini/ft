@@ -72,6 +72,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     DetectorCollection<H1D> H_COSMIC_THALF   = new DetectorCollection<H1D>();
     DetectorCollection<F1D> mylandau = new DetectorCollection<F1D>();
     DetectorCollection<F1D> myTimeGauss = new DetectorCollection<F1D>();
+    DetectorCollection<Double> thresholdValue = new DetectorCollection<Double>();
     H1D hfADC      = null;
     H1D H_fADC_N   = null;
     H1D H_WMAX     = null;
@@ -99,7 +100,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
 
     // analysis parameters
-    int threshold = 12; // 10 fADC value <-> ~ 5mV
+    double threshold = 12; // 10 fADC value <-> ~ 5mV
     int ped_i1 = 4;
     int ped_i2 = 24;
     int pul_i1 = 30;
@@ -109,7 +110,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     int[] cry_event = new int[484];
     int[] cry_max = new int[484];
     int[] cry_n = new int[22];
-    int ncry_cosmic = 4;        // number of crystals above threshold in a column for cosmics selection
+    int ncry_cosmic = 5;        // number of crystals above threshold in a column for cosmics selection
     double crystal_size = 15;
 
 
@@ -486,6 +487,16 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 H_COSMIC_THALF.get(0, 0, component).setYTitle("Counts"); 
                 mylandau.add(0, 0, component, new F1D("landau",     0.0, 40.0));
                 myTimeGauss.add(0, 0, component, new F1D("gaus", -20.0, 60.0));
+//                if(ix!=-9) {
+                    thresholdValue.add(0, 0, component, threshold);
+//                }
+//                else {
+//                    if     (iy==-6 || iy==-5 || iy==-4 || iy==-3 || iy==-2 || iy==-1) thresholdValue.add(0, 0, component, threshold/3.);     
+//                    else if(iy== 6 ||           iy==4  || iy==3  || iy==2  || iy==1 ) thresholdValue.add(0, 0, component, threshold/2.);
+//                    else                                                              thresholdValue.add(0, 0, component, threshold);
+//                    if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholdValue.add(0, 0, component, threshold);
+//                    else                                       thresholdValue.add(0, 0, component, threshold/3.);
+//                }
             }
         }
         H_fADC_N   = new H1D("fADC"  , 504, 0, 504);
@@ -743,16 +754,16 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             int ix  = key - iy * 22;
             int nCrystalInColumn = 0;
             fadcFitter.fit(counter.getChannels().get(0));
-            int i1=(int) max(0,iy-ncry_cosmic-1);    // allowing for +/- to cope with dead channels
-            int i2=(int) min(22,iy+ncry_cosmic+1);
+            int i1=(int) max(0,iy-ncry_cosmic);    // allowing for +/- to cope with dead channels
+            int i2=(int) min(22,iy+ncry_cosmic);
             for(int i=i1; i<=i2; i++) {
-//                threshold=12;
+//                threshold =12;
 //                if(ix==-9 && (i==-6 || i==-5 || i==-4 || i==-3 || i==-2 || i==-1)) threshold=4;
 //                if(ix==-9 && (i== 6 ||          i==4  || i==3  || i==2  || i==1)) threshold=6;
                 if(i!=iy && doesThisCrystalExist(i*22+ix)) {
 //                    System.out.println(ix + " " + iy + " " + i1 + " " + i2 + " " + i + " " +H_WMAX.getBinContent(i*22+ix));
 //                    if(H_WMAX.getBinContent(i*22+ix)>threshold && H_TCROSS.getBinContent(i*22+ix)>0) nCrystalInColumn++;                    
-                    if(H_WMAX.getBinContent(i*22+ix)>threshold ) nCrystalInColumn++;                    
+                    if(H_WMAX.getBinContent(i*22+ix)>thresholdValue.get(0, 0, i*22+ix) ) nCrystalInColumn++;                    
                 }
             }
             if(nCrystalInColumn>=ncry_cosmic) {
@@ -761,7 +772,8 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 for (int i = 0; i < Math.min(pulse.length, H_COSMIC_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
                     H_COSMIC_fADC.get(0, 0, key).fill(i, pulse[i]-fadcFitter.getPedestal() + 10.0);                
                 }
-                H_COSMIC_CHARGE.get(0, 0, key).fill(counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50);
+                double charge=(counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50)*threshold/thresholdValue.get(0, 0, key);
+                H_COSMIC_CHARGE.get(0, 0, key).fill(charge);
                 H_COSMIC_VMAX.get(0, 0, key).fill((fadcFitter.getWave_Max()-fadcFitter.getPedestal())*LSB);
                 H_COSMIC_TCROSS.get(0, 0, key).fill(fadcFitter.getTime(3)-tPMTCross);
                 H_COSMIC_THALF.get(0, 0, key).fill(fadcFitter.getTime(7)-tPMTHalf);                
