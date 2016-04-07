@@ -14,7 +14,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 
 
-import org.clas.ftcal.FTCALViewerModule;
+import org.clas.ftcal.FTCALCosmic;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.basic.IDetectorModule;
@@ -36,7 +36,7 @@ import org.root.attr.ColorPalette;
 public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule, ActionListener {
 
     
-    FTCALViewerModule moduleFTCAL=new FTCALViewerModule();
+    FTCALCosmic moduleFTCAL=new FTCALCosmic();
     
         
     DetectorEventProcessorPane evPane = new DetectorEventProcessorPane();

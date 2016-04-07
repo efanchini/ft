@@ -1,8 +1,8 @@
 package org.clas.ftcal;
 
 
-import tools.BookCanvas;
-import tools.FitData;
+import org.clas.tools.CanvasBook;
+import org.clas.tools.FitData;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
@@ -12,7 +12,6 @@ import java.io.File;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -30,7 +29,6 @@ import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.calib.DetectorShapeTabView;
-import org.jlab.clas12.calib.DetectorShapeView2D;
 import org.jlab.clas12.calib.IDetectorListener;
 import org.jlab.clas12.detector.DetectorChannel;
 import org.jlab.clas12.detector.DetectorCounter;
@@ -45,8 +43,11 @@ import org.root.func.F1D;
 import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
 import org.root.basic.EmbeddedCanvas;
+import org.clas.tools.CustomizeFit;
+import org.clas.tools.ExtendedFADCFitter;
+import org.clas.tools.Miscellaneous;
 
-public class FTCALViewerModule implements IDetectorListener,IHashTableListener,ActionListener,ChangeListener{
+public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionListener,ChangeListener{
 
     // detector view
     FTCALView viewFTCAL = new FTCALView("FTCAL");
@@ -58,15 +59,16 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     EmbeddedCanvas canvasNoise     = new EmbeddedCanvas();
     EmbeddedCanvas canvasEnergy    = new EmbeddedCanvas();
     EmbeddedCanvas canvasTime      = new EmbeddedCanvas();
-    DetectorShapeTabView view = new DetectorShapeTabView();
+    DetectorShapeTabView view      = new DetectorShapeTabView();
+
     HashTable  summaryTable   = null; 
     JPanel radioPane      = new JPanel();
     JPanel radioPaneNoise = new JPanel();
     JPanel radioPaneFits  = new JPanel();
     
     // file chooser
-    JFileChooser fc = new JFileChooser();
-
+    JFileChooser fc = new JFileChooser();    
+    
     // histograms, functions and graphs
     DetectorCollection<H1D> H_fADC = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_WAVE = new DetectorCollection<H1D>();
@@ -91,18 +93,21 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     H1D H_TIME_MEAN    = null;
     H1D H_TIME_SIGMA   = null;
     H1D H_TIME_CHI2    = null;
+    final CustomizeFit cfit = new CustomizeFit();
     
     double[] crystalID; 
     double[] pedestalMEAN;
+    double[] pedestalRMS;
     double[] noiseRMS;
     double[] cosmicCharge;
     double[] timeCross;
     double[] timeHalf;
-    int[] crystalPointers;    
-    
+
     // decoded related information
     int nProcessed = 0;
     EventDecoder decoder;
+    ExtendedFADCFitter eFADCFitter = new ExtendedFADCFitter();
+    
     
     public EventDecoder getDecoder() {
         return decoder;
@@ -136,7 +141,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
     
     
-    public FTCALViewerModule(){
+    public FTCALCosmic(){
         this.detectorPanel=null;
         this.decoder=null;
     }
@@ -180,6 +185,9 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         JButton fitBtn = new JButton("Fit Histograms");
         fitBtn.addActionListener(this);
         buttonPane.add(fitBtn);
+        JButton cfitBtn = new JButton("Customize Fit...");
+        cfitBtn.addActionListener(this);
+        buttonPane.add(cfitBtn);
         JButton fileBtn = new JButton("Save to File");
         fileBtn.addActionListener(this);
         buttonPane.add(fileBtn);
@@ -188,16 +196,19 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 //        viewPane.setLayout(new BorderLayout());
         
         JRadioButton statRb  = new JRadioButton("Status");
-        JRadioButton pedRb   = new JRadioButton("Pedestal");
-        JRadioButton rmsRb   = new JRadioButton("RMS");
+        JRadioButton pedRb   = new JRadioButton("Pedestal Mean");
+        JRadioButton rmsRb   = new JRadioButton("Pedestal RMS");
+        JRadioButton noiseRb = new JRadioButton("Noise");
         ButtonGroup groupNoise = new ButtonGroup();
         groupNoise.add(statRb);
         groupNoise.add(pedRb);
         groupNoise.add(rmsRb);
+        groupNoise.add(noiseRb);
         statRb.setSelected(true);
         statRb.addActionListener(this);
         pedRb.addActionListener(this);
         rmsRb.addActionListener(this);
+        noiseRb.addActionListener(this);
         
         JRadioButton occRb   = new JRadioButton("Occupancy");
         JRadioButton meanRb  = new JRadioButton("Mean");
@@ -218,6 +229,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         radioPaneNoise.add(statRb);
         radioPaneNoise.add(pedRb);
         radioPaneNoise.add(rmsRb);
+        radioPaneNoise.add(noiseRb);
         
         radioPaneFits.setLayout(new FlowLayout());       
         radioPaneFits.add(occRb);
@@ -233,10 +245,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         canvasPane.add(tabbedPane, BorderLayout.CENTER);
         canvasPane.add(buttonPane, BorderLayout.PAGE_END);
     
-//        viewPane.add(this.view, BorderLayout.CENTER);
-//        viewPane.add(radioPane, BorderLayout.PAGE_END);
         view.add(radioPane, BorderLayout.PAGE_END);
-//        view.add(radioPaneFits, BorderLayout.PAGE_END);
         
         splitPane.setLeftComponent(this.view);
         splitPane.setRightComponent(canvasPane);
@@ -348,13 +357,11 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     private void initTable() {
         summaryTable = new HashTable(3,"Pedestal:d","Noise:i","N. Events:i","Energy Mean:d","Energy Sigma:d","Energy Chi2:d","Time Mean:d","Time Sigma:d");
         double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1, -1};
-        for (int component = 0; component < nCrystalX*nCrystalY; component++) {
-            if(doesThisCrystalExist(component)) {
-                summaryTable.addRow(summaryInitialValues,0,0,component);
-                summaryTable.addConstrain(3, 160.0, 240.0);
-                summaryTable.addConstrain(4, 1.0, 1.5); 
-                summaryTable.addConstrain(6, 5.0, 25.); 
-            }
+        for (int component : viewFTCAL.getViewComponents()) {
+            summaryTable.addRow(summaryInitialValues,0,0,component);
+            summaryTable.addConstrain(3, 160.0, 240.0);
+            summaryTable.addConstrain(4, 1.0, 1.5); 
+            summaryTable.addConstrain(6, 5.0, 25.); 
         }
     }
     
@@ -362,21 +369,6 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         viewFTCAL.addPaddles();
         this.view.addDetectorLayer(viewFTCAL);
         view.addDetectorListener(this);
-    }
-
-    private boolean doesThisCrystalExist(int id) {
-
-        boolean crystalExist=false;
-        int iy = id / nCrystalX;
-        int ix = id - iy * nCrystalX;
-
-        double xcrystal = crystal_size * (nCrystalX - ix - 0.5);
-        double ycrystal = crystal_size * (nCrystalY - iy - 0.5);
-        double rcrystal = Math.sqrt(Math.pow(xcrystal - crystal_size * 11, 2.0) + Math.pow(ycrystal - crystal_size * 11, 2.0));
-        if (rcrystal > crystal_size * 4 && rcrystal < crystal_size * 11) {
-            crystalExist=true;
-        }
-        return crystalExist;
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -387,26 +379,32 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         }
         if (e.getActionCommand().compareTo("Fit Histograms") == 0) {
             this.fitHistograms();
-            this.plotCosmicsHistograms(H_COSMIC_CHARGE, mylandau);
+            if(plotSelect==3) this.cosmicsBook(H_COSMIC_THALF,  myTimeGauss);
+            else              this.cosmicsBook(H_COSMIC_CHARGE, mylandau);
         }
         if (e.getActionCommand().compareTo("Save to File") == 0) {
             this.saveToFile();
         }
+        if (e.getActionCommand().compareTo("Customize Fit...") == 0) {
+            this.customizeFit();        
+        }
 
         if (e.getActionCommand().compareTo("Status") == 0) {
             drawSelect = 0;
-        } else if (e.getActionCommand().compareTo("Pedestal") == 0) {
+        } else if (e.getActionCommand().compareTo("Pedestal Mean") == 0) {
             drawSelect = 1;
-        } else if (e.getActionCommand().compareTo("RMS") == 0) {
+        } else if (e.getActionCommand().compareTo("Pedestal RMS") == 0) {
             drawSelect = 2;
-        } else if (e.getActionCommand().compareTo("Occupancy") == 0) {
+        } else if (e.getActionCommand().compareTo("Noise") == 0) {
             drawSelect = 3;
-        } else if (e.getActionCommand().compareTo("Mean") == 0) {
+        } else if (e.getActionCommand().compareTo("Occupancy") == 0) {
             drawSelect = 4;
-        } else if (e.getActionCommand().compareTo("Sigma") == 0) {
+        } else if (e.getActionCommand().compareTo("Mean") == 0) {
             drawSelect = 5;
-        } else if (e.getActionCommand().compareTo("Chi2") == 0) {
+        } else if (e.getActionCommand().compareTo("Sigma") == 0) {
             drawSelect = 6;
+        } else if (e.getActionCommand().compareTo("Chi2") == 0) {
+            drawSelect = 7;
         }
         this.view.repaint();
     }
@@ -421,67 +419,54 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     }
      
     public void initHistograms() {
-        for (int component = 0; component < 505; component++) {
-            if(doesThisCrystalExist(component) || component>499) {
-
-                int iy = component / nCrystalX;
-                int ix = component - iy * nCrystalX;
-                if (ix > 10) {
-                    ix = ix - 10;
-                } else {
-                    ix = ix - 11;
-                }
-                if (iy > 10) {
-                    iy = iy - 10;
-                } else {
-                    iy = iy - 11;
-                }
-                String title = "Crystal " + component + " (" + ix + "," + iy + ")";
-                H_fADC.add(0, 0, component, new H1D("fADC_" + component, title, 100, 0.0, 100.0));
-                H_PED.add(0, 0, component, new H1D("Pedestal_" + component, title, 200, 150., 250.0));
-                H_PED.get(0, 0, component).setFillColor(2);
-                H_PED.get(0, 0, component).setXTitle("Pedestal (fADC counts)");
-                H_PED.get(0, 0, component).setYTitle("Counts");                        
-                H_NOISE.add(0, 0, component, new H1D("Noise_" + component, title, 200, 0.0, 10.0));
-                H_NOISE.get(0, 0, component).setFillColor(4);
-                H_NOISE.get(0, 0, component).setXTitle("RMS (mV)");
-                H_NOISE.get(0, 0, component).setYTitle("Counts");  
-                H_WAVE.add(0, 0, component, new H1D("Wave_" + component, title, 100, 0.0, 100.0));
-                H_WAVE.get(0, 0, component).setFillColor(5);
-                H_WAVE.get(0, 0, component).setXTitle("fADC Sample");
-                H_WAVE.get(0, 0, component).setYTitle("fADC Counts");
-                H_COSMIC_fADC.add(0, 0, component, new H1D("FADC_" + component, title, 100, 0.0, 100.0));
-                H_COSMIC_fADC.get(0, 0, component).setFillColor(3);
-                H_COSMIC_fADC.get(0, 0, component).setXTitle("fADC Sample");
-                H_COSMIC_fADC.get(0, 0, component).setYTitle("fADC Counts");
-                H_COSMIC_CHARGE.add(0, 0, component, new H1D("Charge_" + component, title, 80, 0.0, 40.0));
-                H_COSMIC_CHARGE.get(0, 0, component).setFillColor(2);
-                H_COSMIC_CHARGE.get(0, 0, component).setXTitle("Charge (pC)");
-                H_COSMIC_CHARGE.get(0, 0, component).setYTitle("Counts");
-                H_COSMIC_VMAX.add(0, 0, component, new H1D("VMax_" + component, title, 80, 0.0, 40.0));
-                H_COSMIC_VMAX.get(0, 0, component).setFillColor(2);
-                H_COSMIC_VMAX.get(0, 0, component).setXTitle("Amplitude (mV)");
-                H_COSMIC_VMAX.get(0, 0, component).setYTitle("Counts");
-                H_COSMIC_TCROSS.add(0, 0, component, new H1D("T_TRIG_" + component, title, 80, -20.0, 60.0));
-                H_COSMIC_TCROSS.get(0, 0, component).setFillColor(5);
-                H_COSMIC_TCROSS.get(0, 0, component).setXTitle("Time (ns)");
-                H_COSMIC_TCROSS.get(0, 0, component).setYTitle("Counts");
-                H_COSMIC_THALF.add(0, 0, component, new H1D("T_HALF_" + component, title, 80,-20.0, 60.0));
-                H_COSMIC_THALF.get(0, 0, component).setFillColor(5);
-                H_COSMIC_THALF.get(0, 0, component).setXTitle("Time (ns)");
-                H_COSMIC_THALF.get(0, 0, component).setYTitle("Counts"); 
-                mylandau.add(0, 0, component, new F1D("landau",    0.0, 40.0));
-                myTimeGauss.add(0, 0, component, new F1D("gaus", -20.0, 60.0));
-                if(ix!=-9) {
-                    thresholdValue.add(0, 0, component, threshold);
-                }
-                else if(ix==-9) {
+        for (int component : this.viewFTCAL.getViewComponents()) {
+            int ix = viewFTCAL.getIdX(component);
+            int iy = viewFTCAL.getIdY(component);
+            String title = "Crystal " + component + " (" + ix + "," + iy + ")";
+            H_fADC.add(0, 0, component, new H1D("fADC_" + component, title, 100, 0.0, 100.0));
+            H_PED.add(0, 0, component, new H1D("Pedestal_" + component, title, 400, 100., 300.0));
+            H_PED.get(0, 0, component).setFillColor(2);
+            H_PED.get(0, 0, component).setXTitle("Pedestal (fADC counts)");
+            H_PED.get(0, 0, component).setYTitle("Counts");                        
+            H_NOISE.add(0, 0, component, new H1D("Noise_" + component, title, 200, 0.0, 10.0));
+            H_NOISE.get(0, 0, component).setFillColor(4);
+            H_NOISE.get(0, 0, component).setXTitle("RMS (mV)");
+            H_NOISE.get(0, 0, component).setYTitle("Counts");  
+            H_WAVE.add(0, 0, component, new H1D("Wave_" + component, title, 100, 0.0, 100.0));
+            H_WAVE.get(0, 0, component).setFillColor(5);
+            H_WAVE.get(0, 0, component).setXTitle("fADC Sample");
+            H_WAVE.get(0, 0, component).setYTitle("fADC Counts");
+            H_COSMIC_fADC.add(0, 0, component, new H1D("FADC_" + component, title, 100, 0.0, 100.0));
+            H_COSMIC_fADC.get(0, 0, component).setFillColor(3);
+            H_COSMIC_fADC.get(0, 0, component).setXTitle("fADC Sample");
+            H_COSMIC_fADC.get(0, 0, component).setYTitle("fADC Counts");
+            H_COSMIC_CHARGE.add(0, 0, component, new H1D("Charge_" + component, title, 80, 0.0, 40.0));
+            H_COSMIC_CHARGE.get(0, 0, component).setFillColor(2);
+            H_COSMIC_CHARGE.get(0, 0, component).setXTitle("Charge (pC)");
+            H_COSMIC_CHARGE.get(0, 0, component).setYTitle("Counts");
+            H_COSMIC_VMAX.add(0, 0, component, new H1D("VMax_" + component, title, 80, 0.0, 40.0));
+            H_COSMIC_VMAX.get(0, 0, component).setFillColor(2);
+            H_COSMIC_VMAX.get(0, 0, component).setXTitle("Amplitude (mV)");
+            H_COSMIC_VMAX.get(0, 0, component).setYTitle("Counts");
+            H_COSMIC_TCROSS.add(0, 0, component, new H1D("T_TRIG_" + component, title, 80, -20.0, 60.0));
+            H_COSMIC_TCROSS.get(0, 0, component).setFillColor(5);
+            H_COSMIC_TCROSS.get(0, 0, component).setXTitle("Time (ns)");
+            H_COSMIC_TCROSS.get(0, 0, component).setYTitle("Counts");
+            H_COSMIC_THALF.add(0, 0, component, new H1D("T_HALF_" + component, title, 80,-20.0, 60.0));
+            H_COSMIC_THALF.get(0, 0, component).setFillColor(5);
+            H_COSMIC_THALF.get(0, 0, component).setXTitle("Time (ns)");
+            H_COSMIC_THALF.get(0, 0, component).setYTitle("Counts"); 
+            mylandau.add(0, 0, component, new F1D("landau",    0.0, 40.0));
+            myTimeGauss.add(0, 0, component, new F1D("gaus", -20.0, 60.0));
+            if(ix!=-9) {
+                thresholdValue.add(0, 0, component, threshold);
+            }
+            else if(ix==-9) {
 //                    if     (iy==-6 || iy==-5 || iy==-4 || iy==-3 || iy==-2 || iy==-1) thresholdValue.add(0, 0, component, threshold/3.);     
 //                    else if(iy== 6 ||           iy==4  || iy==3  || iy==2  || iy==1 ) thresholdValue.add(0, 0, component, threshold/2.);
 //                    else                                                              thresholdValue.add(0, 0, component, threshold);
-                    if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholdValue.add(0, 0, component, threshold);
-                    else                                       thresholdValue.add(0, 0, component, threshold/3.);
-                }
+                if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholdValue.add(0, 0, component, threshold);
+                else                                       thresholdValue.add(0, 0, component, threshold/3.);
             }
         }
         H_fADC_N       = new H1D("fADC"  , 504, 0, 504);
@@ -495,29 +480,21 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         H_TIME_SIGMA   = new H1D("SIGMA" , 504, 0, 504);
         H_TIME_CHI2    = new H1D("CHI2"  , 504, 0, 504);
         
-        crystalID       = new double[332];
-        pedestalMEAN    = new double[332];
-        noiseRMS        = new double[332];
-        timeCross       = new double[332];
-        timeHalf        = new double[332];
-        crystalPointers = new int[nCrystalComponents];
-        int ipointer=0;
-        for(int i=0; i<nCrystalComponents; i++) {
-            if(doesThisCrystalExist(i)) {
-                crystalPointers[i]=ipointer;
-                crystalID[ipointer]=i;
-                ipointer++;
-            }
-            else {
-                crystalPointers[i]=-1;
-            }
+        crystalID       = new double[viewFTCAL.getNComponents()];
+        pedestalMEAN    = new double[viewFTCAL.getNComponents()];
+        noiseRMS        = new double[viewFTCAL.getNComponents()];
+        timeCross       = new double[viewFTCAL.getNComponents()];
+        timeHalf        = new double[viewFTCAL.getNComponents()];
+        System.out.println(viewFTCAL.getNComponents());
+        for(int i=0; i<viewFTCAL.getNComponents(); i++) {
+            crystalID[i]=viewFTCAL.getIDArray()[i];
         }
 
 
     }
 
     public void resetHistograms() { 
-        for (int component = 0; component < nCrystalX * nCrystalY; component++) {
+        for (int component : viewFTCAL.getViewComponents()) {
             if(H_fADC.hasEntry(0, 0, component)) {
                 H_fADC.get(0, 0, component).reset();
                 H_NOISE.get(0, 0, component).reset();
@@ -543,19 +520,23 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         mlMin=1.0;
         if(hcosmic.getBinContent(0)==0) mylandau.add(0, 0, key, new F1D("landau",     mlMin, mlMax));
         else                            mylandau.add(0, 0, key, new F1D("landau+exp", mlMin, mlMax));
+        mylandau.get(0,0,key).setName("Landau_"+key);
         if(hcosmic.getBinContent(0)<10) {
             mylandau.get(0, 0, key).setParameter(0, hcosmic.getBinContent(hcosmic.getMaximumBin()));
         }
         else {
             mylandau.get(0, 0, key).setParameter(0, 10);
         }
+        mylandau.get(0, 0, key).setParLimits(0, 0.0, 10000000.); 
         mylandau.get(0, 0, key).setParameter(1,hcosmic.getMean());
         mylandau.get(0, 0, key).setParLimits(1, 5.0, 30.);        
         mylandau.get(0, 0, key).setParameter(2,2);
         mylandau.get(0, 0, key).setParLimits(2, 0.5, 10);
         if(hcosmic.getBinContent(0)!=0) {
             mylandau.get(0, 0, key).setParameter(3,hcosmic.getBinContent(0));
+            mylandau.get(0, 0, key).setParLimits(3,  0.0, 10000000.); 
             mylandau.get(0, 0, key).setParameter(4, -0.2);
+            mylandau.get(0, 0, key).setParLimits(4, -10, 0.); 
         }
     }
     
@@ -598,7 +579,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 System.out.println("Fitting charge histos for component: " + key);
                 this.fitLandau(key);
             }
-            else System.out.println("Skiping charge fit of component: " + key + 
+            else System.out.println("Skipping charge fit of component: " + key + 
                                     ", only " + H_COSMIC_CHARGE.get(0, 0, key).getEntries() + " events");
             if(H_COSMIC_THALF.get(0,0,key).getEntries()>0) {        
                 this.fitTime(key);
@@ -606,20 +587,31 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         }
     }
     
-    private void plotCosmicsHistograms(DetectorCollection<H1D> h, DetectorCollection<F1D> f){
-        JFrame frame = new JFrame();
-        BookCanvas book = new BookCanvas(3,3);
-      
-        for(int key : h.getComponents(0,0)) {
+    private void customizeFit(){     
+        if(plotSelect==2) {
+            cfit.FitPanel(H_COSMIC_CHARGE.get(0,0,keySelect), mylandau.get(0,0,keySelect));
+            this.canvasEnergy.update();
+        }
+        else if(plotSelect==3) {
+            cfit.FitPanel(H_COSMIC_THALF.get(0,0,keySelect), myTimeGauss.get(0,0,keySelect));
+            this.canvasTime.update();            
+        }
+   }
+    
+    private void cosmicsBook(DetectorCollection<H1D> h, DetectorCollection<F1D> f){
+        JFrame     frame = new JFrame();
+        CanvasBook book  = new CanvasBook(4,4);
+        for(int key : h.getComponents(0, 0)) {
             if(h.hasEntry(0, 0, key)) {
-              book.add(h.get(0,0,key),"");
-              book.add(f.get(0,0,key),"same"); 
+                book.add(h.get(0,0,key)," ");
+                book.add(f.get(0,0,key),"same"); 
             }
          }
-
+        book.reset();
         frame.add(book);
         frame.pack();
         frame.setVisible(true);
+        book.drawNextBack(false);
     }   
     
     public void initDecoder() {
@@ -628,7 +620,9 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                         ped_i2, // last bin for pedestal
                         pul_i1, // first bin for pulse integral
                         pul_i2 // last bin for pulse integral
-                        ));    
+                        )); 
+        eFADCFitter.setPedestalRange(ped_i1, ped_i2);
+        eFADCFitter.setPulseRange(pul_i1, pul_i2);
     }
 
     public void hashTableCallback(String string, Long l) {
@@ -636,162 +630,69 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         System.out.println("Selected table row " + string + " " + l);
     }
 
-    public class MyADCFitter implements IFADCFitter {
-
-        private double rms = 0;
-        private double pedestal = 0;
-        private double wave_max=0;
-        private int    thresholdCrossing=0;
-        private double time_3 = 0;
-        private double time_7 = 0;
-
-        public double getPedestal() {
-            return pedestal;
-        }
-
-        public double getRMS() {
-            return rms;
-        }
-
-        public double getWave_Max() {
-            return wave_max;
-        }
-
-        public int getThresholdCrossing() {
-            return thresholdCrossing;
-        }
-        
-        public double getTime(int mode) {
-            double time=0;
-            if(mode==3)       time = time_3;
-            else if(mode==7)  time = time_7;
-            else System.out.println(" Unknown mode for time calculation, check...");
-            return time;
-        }
-
-        public void fit(DetectorChannel dc) {
-            short[] pulse = dc.getPulse();
-            double ped    = 0.0;
-            double noise  = 0;
-            double wmax   = 0;
-            double pmax   = 0;
-            int    tcross = 0; 
-            // calculate pedestal means and noise
-            for (int bin = ped_i1; bin < ped_i2; bin++) {
-                ped += pulse[bin];
-                noise += pulse[bin] * pulse[bin];
-            }
-            pedestal = ped / (ped_i2 - ped_i1);
-            rms = LSB * Math.sqrt(noise / (ped_i2 - ped_i1) - pedestal * pedestal);
-            // determine waveform max
-            for (int bin=0; bin<pulse.length; bin++) {
-                if(pulse[bin]>wmax) wmax=pulse[bin];
-            }
-            wave_max=wmax;
-            // find threshold crossing in pulse region: this determines mode-3 time (4 ns resolution)
-            for (int bin=pul_i1; bin<pul_i2; bin++) {
-                if(pulse[bin]>pedestal+threshold) {
-                    tcross=bin;
-                    break;
-                }
-            }
-            thresholdCrossing=tcross;
-            time_3=tcross*nsPerSample;
-            // find pulse max
-            for (int bin=thresholdCrossing; bin<pulse.length; bin++) { 
-                if (pulse[bin+1]<pulse[bin]){ 
-                    pmax=pulse[bin];
-                    break; 
-                }
-            }
-            // calculating high resolution time    
-            double halfMax = (pmax+pedestal)/2;
-            time_7 = time_3;
-            int t0 = -1;
-            if(tcross>0) { 
-                for (int bin=tcross-1; bin<pul_i2; bin++) {
-                    if (pulse[bin]<=halfMax && pulse[bin+1]>halfMax) {
-                        t0 = bin;
-                        break;
-                    }
-                }
-                if(t0>-1) { 
-                    int t1 = t0 + 1;
-                    int a0 = pulse[t0];
-                    int a1 = pulse[t1];
-                       //final double slope = (a1 - a0); // units = ADC/sample
-                       //final double yint = a1 - slope * t1;  // units = ADC 
-                    time_7 = ((halfMax - a0)/(a1-a0) + t0)* nsPerSample;
-                }
-            }
-       }
-
-    }
-
     public void processDecodedEvent() {
         // TODO Auto-generated method stub
 
         nProcessed++;
 
-        //    System.out.println("event #: " + nProcessed);
         List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
-        FTCALViewerModule.MyADCFitter fadcFitter = new FTCALViewerModule.MyADCFitter();
         H_WMAX.reset();
         H_TCROSS.reset();
         double tPMTCross=0;
         double tPMTHalf=0;
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
-            //                System.out.println(counters.size() + " " + key + " " + counter.getDescriptor().getComponent());
-            //                 System.out.println(counter);
-            fadcFitter.fit(counter.getChannels().get(0));
-            short pulse[] = counter.getChannels().get(0).getPulse();
-            H_fADC_N.fill(key);
-            H_WAVE.get(0, 0, key).reset();
-            for (int i = 0; i < Math.min(pulse.length, H_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
-                H_fADC.get(0, 0, key).fill(i, pulse[i] - fadcFitter.getPedestal() + 10.0);
-                H_WAVE.get(0, 0, key).fill(i, pulse[i]);
-            }
-            H_WMAX.fill(key,fadcFitter.getWave_Max()-fadcFitter.getPedestal());
-            H_TCROSS.fill(key,fadcFitter.getTime(3));
-                //            if(fadcFitter.getWave_Max()-fadcFitter.getPedestal()>threshold) 
-                //            System.out.println("   Component #" + key + " is above threshold, max=" + fadcFitter.getWave_Max() + " ped=" + fadcFitter.getPedestal());
-            H_PED.get(0, 0, key).fill(fadcFitter.getPedestal());
-            H_NOISE.get(0, 0, key).fill(fadcFitter.getRMS());
-            if(key==501) {      // top long PMT
-                tPMTCross = fadcFitter.getTime(3);
-                tPMTHalf  = fadcFitter.getTime(7);
+            if(H_fADC.hasEntry(0, 0, key)) {
+    //                           System.out.println(counters.size() + " " + key + " " + counter.getDescriptor().getComponent());
+    //                           System.out.println(counter);            
+                eFADCFitter.fit(counter.getChannels().get(0),thresholdValue.get(0, 0, key));
+                short pulse[] = counter.getChannels().get(0).getPulse();
+                H_fADC_N.fill(key);
+                H_WAVE.get(0, 0, key).reset();
+                for (int i = 0; i < Math.min(pulse.length, H_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
+                    H_fADC.get(0, 0, key).fill(i, pulse[i] - eFADCFitter.getPedestal() + 10.0);
+                    H_WAVE.get(0, 0, key).fill(i, pulse[i]);
+                }
+                H_WMAX.fill(key,eFADCFitter.getWave_Max()-eFADCFitter.getPedestal());
+                H_TCROSS.fill(key,eFADCFitter.getTime(3));
+                    //            if(fadcFitter.getWave_Max()-fadcFitter.getPedestal()>threshold) 
+                    //            System.out.println("   Component #" + key + " is above threshold, max=" + fadcFitter.getWave_Max() + " ped=" + fadcFitter.getPedestal());
+                H_PED.get(0, 0, key).fill(eFADCFitter.getPedestal());
+                H_NOISE.get(0, 0, key).fill(eFADCFitter.getRMS());
+                if(key==501) {      // top long PMT
+                    tPMTCross = eFADCFitter.getTime(3);
+                    tPMTHalf  = eFADCFitter.getTime(7);
+                }
             }
         }
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
-            int iy  = key/nCrystalX;
-            int ix  = key - iy * nCrystalX;
-            int nCrystalInColumn = 0;
-            fadcFitter.fit(counter.getChannels().get(0));
-            int i1=(int) max(0,iy-ncry_cosmic);    // allowing for +/- to cope with dead channels
-            int i2=(int) min(nCrystalY,iy+ncry_cosmic);
-            for(int i=i1; i<=i2; i++) {
-//                threshold =12;
-//                if(ix==-9 && (i==-6 || i==-5 || i==-4 || i==-3 || i==-2 || i==-1)) threshold=4;
-//                if(ix==-9 && (i== 6 ||          i==4  || i==3  || i==2  || i==1)) threshold=6;
-                if(i!=iy && doesThisCrystalExist(i*nCrystalX+ix)) {
-//                    System.out.println(ix + " " + iy + " " + i1 + " " + i2 + " " + i + " " +H_WMAX.getBinContent(i*nCrystalX+ix));
-//                    if(H_WMAX.getBinContent(i*nCrystalX+ix)>threshold && H_TCROSS.getBinContent(i*nCrystalX+ix)>0) nCrystalInColumn++;                    
-                    if(H_WMAX.getBinContent(i*nCrystalX+ix)>thresholdValue.get(0, 0, i*nCrystalX+ix) ) nCrystalInColumn++;                    
+            if(H_fADC.hasEntry(0, 0, key)) {
+                int iy  = key/nCrystalX;
+                int ix  = key - iy * nCrystalX;
+                int nCrystalInColumn = 0;
+                eFADCFitter.fit(counter.getChannels().get(0),thresholdValue.get(0, 0, key));
+                int i1=(int) max(0,iy-ncry_cosmic);    // allowing for +/- to cope with dead channels
+                int i2=(int) min(nCrystalY,iy+ncry_cosmic);
+                for(int i=i1; i<=i2; i++) {
+                    if(i!=iy && viewFTCAL.hasComponent(i*nCrystalX+ix)) {
+    //                    System.out.println(ix + " " + iy + " " + i1 + " " + i2 + " " + i + " " +H_WMAX.getBinContent(i*nCrystalX+ix));
+    //                    if(H_WMAX.getBinContent(i*nCrystalX+ix)>threshold && H_TCROSS.getBinContent(i*nCrystalX+ix)>0) nCrystalInColumn++;                    
+                        if(H_WMAX.getBinContent(i*nCrystalX+ix)>thresholdValue.get(0, 0, i*nCrystalX+ix) ) nCrystalInColumn++;                    
+                    }
                 }
-            }
-            if(nCrystalInColumn>=ncry_cosmic) {
-                short pulse[] = counter.getChannels().get(0).getPulse();
-                H_COSMIC_N.fill(key);
-                for (int i = 0; i < Math.min(pulse.length, H_COSMIC_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
-                    H_COSMIC_fADC.get(0, 0, key).fill(i, pulse[i]-fadcFitter.getPedestal() + 10.0);                
+                if(nCrystalInColumn>=ncry_cosmic) {
+                    short pulse[] = counter.getChannels().get(0).getPulse();
+                    H_COSMIC_N.fill(key);
+                    for (int i = 0; i < Math.min(pulse.length, H_COSMIC_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
+                        H_COSMIC_fADC.get(0, 0, key).fill(i, pulse[i]-eFADCFitter.getPedestal() + 10.0);                
+                    }
+                    double charge=(counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50);
+                    H_COSMIC_CHARGE.get(0, 0, key).fill(charge);
+                    H_COSMIC_VMAX.get(0, 0, key).fill((eFADCFitter.getWave_Max()-eFADCFitter.getPedestal())*LSB);
+                    H_COSMIC_TCROSS.get(0, 0, key).fill(eFADCFitter.getTime(3)-tPMTCross);
+                    H_COSMIC_THALF.get(0, 0, key).fill(eFADCFitter.getTime(7)-tPMTHalf);                
                 }
-                double charge=(counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50);
-                H_COSMIC_CHARGE.get(0, 0, key).fill(charge);
-                H_COSMIC_VMAX.get(0, 0, key).fill((fadcFitter.getWave_Max()-fadcFitter.getPedestal())*LSB);
-                H_COSMIC_TCROSS.get(0, 0, key).fill(fadcFitter.getTime(3)-tPMTCross);
-                H_COSMIC_THALF.get(0, 0, key).fill(fadcFitter.getTime(7)-tPMTHalf);                
             }
         }
         this.canvasEvent.draw(H_WAVE.get(0, 0, keySelect)); 
@@ -810,25 +711,25 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
         // event viewer
         this.canvasEvent.draw(H_WAVE.get(0, 0, keySelect));
         // noise
-        for(int key=0; key<crystalPointers.length; key++) {
-            if(crystalPointers[key]>=0) {
-                pedestalMEAN[crystalPointers[key]] = H_PED.get(0,0,key).getMean();
-                noiseRMS[crystalPointers[key]]     = H_NOISE.get(0, 0, key).getMean();
-                timeCross[crystalPointers[key]]    = H_COSMIC_TCROSS.get(0, 0, key).getMean();
-                timeHalf[crystalPointers[key]]     = H_COSMIC_THALF.get(0, 0, key).getMean();
-            }
+        int ipointer=0;
+        for(int key : viewFTCAL.getViewComponents()) {
+            pedestalMEAN[ipointer] = H_PED.get(0,0,key).getMean();
+            noiseRMS[ipointer]     = H_NOISE.get(0, 0, key).getMean();
+            timeCross[ipointer]    = H_COSMIC_TCROSS.get(0, 0, key).getMean();
+            timeHalf[ipointer]     = H_COSMIC_THALF.get(0, 0, key).getMean();
+            ipointer++;
         }
         GraphErrors  G_PED = new GraphErrors(crystalID,pedestalMEAN);
         G_PED.setTitle(" "); //  title
         G_PED.setXTitle("Crystal ID"); // X axis title
-        G_PED.setYTitle("Noise RMS (mV)");   // Y axis title
+        G_PED.setYTitle("Pedestal RMS (mV)");   // Y axis title
         G_PED.setMarkerColor(2); // color from 0-9 for given palette
         G_PED.setMarkerSize(5); // size in points on the screen
         G_PED.setMarkerStyle(1); // Style can be 1 or 2
         GraphErrors  G_NOISE = new GraphErrors(crystalID,noiseRMS);
         G_NOISE.setTitle(" "); //  title
         G_NOISE.setXTitle("Crystal ID"); // X axis title
-        G_NOISE.setYTitle("Noise RMS (mV)");   // Y axis title
+        G_NOISE.setYTitle("Noise (mV)");   // Y axis title
         G_NOISE.setMarkerColor(4); // color from 0-9 for given palette
         G_NOISE.setMarkerSize(5); // size in points on the screen
         G_NOISE.setMarkerStyle(1); // Style can be 1 or 2
@@ -946,6 +847,11 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                         shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
                     }
                     else if(drawSelect==2) {
+                        double cvalue = 10*this.H_PED.get(sector, layer, paddle).getRMS();
+                        Color col = palette.getColor3D(cvalue, 100., true);           
+                        shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                        
+                    }
+                    else if(drawSelect==3) {
                         double cvalue = this.H_NOISE.get(sector, layer, paddle).getMean();
                         Color col = palette.getColor3D(cvalue, 2., true);           
                         shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                        
@@ -969,17 +875,17 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             radioPaneNoise.setVisible(false);
             radioPaneFits.setVisible(true);
             if (this.H_COSMIC_CHARGE.hasEntry(sector, layer, paddle)) {
-                if(drawSelect==4) {
+                if(drawSelect==5) {
                     double lmean = 10*H_COSMIC_MEAN.getBinContent(paddle);
-                    Color col = palette.getColor3D(lmean, 100., true);           
+                    Color col = palette.getColor3D(lmean, 500., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
                 }
-                else if(drawSelect==5) {
+                else if(drawSelect==6) {
                     double lsigma = 10*H_COSMIC_SIGMA.getBinContent(paddle);
                     Color col = palette.getColor3D(lsigma, 100., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
                 }
-                else if(drawSelect==6) {
+                else if(drawSelect==7) {
                     double lchi2 = 100*H_COSMIC_CHI2.getBinContent(paddle);
                     Color col = palette.getColor3D(lchi2, 500., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
@@ -995,17 +901,17 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             radioPaneNoise.setVisible(false);
             radioPaneFits.setVisible(true);
             if (this.H_COSMIC_THALF.hasEntry(sector, layer, paddle)) {
-                if(drawSelect==4) {
+                if(drawSelect==5) {
                     double lmean = 10*H_TIME_MEAN.getBinContent(paddle);
                     Color col = palette.getColor3D(lmean, 400., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
                 }
-                else if(drawSelect==5) {
+                else if(drawSelect==6) {
                     double lsigma = 10*H_TIME_SIGMA.getBinContent(paddle);
                     Color col = palette.getColor3D(lsigma, 100., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
                 }
-                else if(drawSelect==6) {
+                else if(drawSelect==7) {
                     double lchi2 = 100*H_TIME_CHI2.getBinContent(paddle);
                     Color col = palette.getColor3D(lchi2, 300., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());                    
@@ -1024,40 +930,56 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
     }
 
     private void updateTable() {
-        for(int key=0; key<nCrystalX*nCrystalY; key++) {
-            if(doesThisCrystalExist(key)) {
-                String pedestal = String.format ("%.1f", H_PED.get(0, 0, key).getMean());
-                String noise    = String.format ("%.2f", H_NOISE.get(0, 0, key).getMean());
-                String nev      = String.format ("%d",   H_COSMIC_CHARGE.get(0,0,key).getEntries());
-                String mips     = String.format ("%.2f", H_COSMIC_MEAN.getBinContent(key));
-                String emips    = String.format ("%.2f", H_COSMIC_SIGMA.getBinContent(key));
-                String chi2     = String.format ("%.2f", H_COSMIC_CHI2.getBinContent(key));
-                String time     = String.format ("%.2f", myTimeGauss.get(0, 0, key).getParameter(1));
-                String stime    = String.format ("%.2f", myTimeGauss.get(0, 0, key).getParameter(2));
-                
-                
-                summaryTable.setValueAtAsDouble(0, Double.parseDouble(pedestal), 0, 0, key);
-                summaryTable.setValueAtAsDouble(1, Double.parseDouble(noise)   , 0, 0, key);
-                summaryTable.setValueAtAsDouble(2, Double.parseDouble(nev)     , 0, 0, key);
-                summaryTable.setValueAtAsDouble(3, Double.parseDouble(mips)    , 0, 0, key);
-                summaryTable.setValueAtAsDouble(4, Double.parseDouble(emips)   , 0, 0, key);
-                summaryTable.setValueAtAsDouble(5, Double.parseDouble(chi2)    , 0, 0, key);
-                summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 0, 0, key);
-                summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 0, 0, key);                
-            }            
+        for(int key : viewFTCAL.getViewComponents()) {
+            String pedestal = String.format ("%.1f", H_PED.get(0, 0, key).getMean());
+            String noise    = String.format ("%.2f", H_NOISE.get(0, 0, key).getMean());
+            String nev      = String.format ("%d",   H_COSMIC_CHARGE.get(0,0,key).getEntries());
+            String mips     = String.format ("%.2f", H_COSMIC_MEAN.getBinContent(key));
+            String emips    = String.format ("%.2f", H_COSMIC_SIGMA.getBinContent(key));
+            String chi2     = String.format ("%.2f", H_COSMIC_CHI2.getBinContent(key));
+            String time     = String.format ("%.2f", myTimeGauss.get(0, 0, key).getParameter(1));
+            String stime    = String.format ("%.2f", myTimeGauss.get(0, 0, key).getParameter(2));
+
+
+            summaryTable.setValueAtAsDouble(0, Double.parseDouble(pedestal), 0, 0, key);
+            summaryTable.setValueAtAsDouble(1, Double.parseDouble(noise)   , 0, 0, key);
+            summaryTable.setValueAtAsDouble(2, Double.parseDouble(nev)     , 0, 0, key);
+            summaryTable.setValueAtAsDouble(3, Double.parseDouble(mips)    , 0, 0, key);
+            summaryTable.setValueAtAsDouble(4, Double.parseDouble(emips)   , 0, 0, key);
+            summaryTable.setValueAtAsDouble(5, Double.parseDouble(chi2)    , 0, 0, key);
+            summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 0, 0, key);
+            summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 0, 0, key);             
         }
-//        summaryTable.show();
     }
 
     private void saveToFile() {
-        this.fc.setCurrentDirectory(new File("calibfiles"));
+//        this.fc.setCurrentDirectory(new File("calibfiles"));
+//	int returnValue = fc.showSaveDialog(null);
+//        if (returnValue == JFileChooser.APPROVE_OPTION) {
+//            String outputFileName = fc.getSelectedFile().getAbsolutePath();
+//            System.out.println("Saving calibration results to: " + outputFileName);
+//            FitData cosmicFile = new FitData(mylandau,H_COSMIC_CHARGE);
+//            cosmicFile.writeToFile(outputFileName);
+//        }
+        Miscellaneous extra = new Miscellaneous();
+        String outputFileName = "./"+extra.datetime()+"_Fit.txt";
+        String filename;
+        
+        this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            String outputFileName = fc.getSelectedFile().getAbsolutePath();
+            outputFileName = fc.getSelectedFile().getAbsolutePath();
             System.out.println("Saving calibration results to: " + outputFileName);
             FitData cosmicFile = new FitData(mylandau,H_COSMIC_CHARGE);
             cosmicFile.writeToFile(outputFileName);
         }
+        String CCDBoutFile = "./"+extra.datetime()+"_CCDB.txt";
+        extra.CCDBcosmic(mylandau, H_PED, CCDBoutFile);
+        String outputname = extra.extractstring(outputFileName);
+        
+//        extra.evioclas.eviofile(H_COSMIC_CHARGE, mylandau, outputname);
     }
+    
+
     
 }

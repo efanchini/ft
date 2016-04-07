@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package tools;
+package org.clas.tools;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -35,7 +35,7 @@ import org.root.basic.EmbeddedCanvas;
  */
 
 
-public class BookCanvas extends JPanel implements ActionListener {
+public class CanvasBook extends JPanel implements ActionListener {
     
         private List<IDataSet> container = new ArrayList<IDataSet>();
         private List<String>   options   = new ArrayList<String>();
@@ -45,28 +45,12 @@ public class BookCanvas extends JPanel implements ActionListener {
         private int            currentPosition = 0;
         private boolean backward = false; 
         JComboBox comboDivide = null;
+        private int elements =1;
         
         
-    public BookCanvas(){
-        initCanvas();
-    }
-
-    
-    public void initCanvas() {
-        // event canvas
-        this.canvas.setGridX(false);
-        this.canvas.setGridY(false);
-        this.canvas.setAxisFontSize(10);
-        this.canvas.setTitleFontSize(16);
-        this.canvas.setAxisTitleFontSize(14);
-        this.canvas.setStatBoxFontSize(8);
-    }
-    
-    
-    public BookCanvas(int dx, int dy){
-        super();
-      
-        TStyle.setFrameFillColor(250, 250, 255);
+    public CanvasBook(int dx, int dy){
+        
+//        TStyle.setFrameFillColor(250, 250, 255);
         this.setLayout(new BorderLayout());
         
         this.nDivisionsX = dx;
@@ -77,7 +61,7 @@ public class BookCanvas extends JPanel implements ActionListener {
         
         JButton  buttonPrev = new JButton("< Previous");
         JButton  buttonNext = new JButton("Next >");
-        JButton  buttonSave = new JButton("Save to File");
+        JButton  buttonSave = new JButton("Print...");
         buttonNext.addActionListener(this);
         buttonPrev.addActionListener(this);
         buttonSave.addActionListener(this);
@@ -95,66 +79,97 @@ public class BookCanvas extends JPanel implements ActionListener {
 
         this.add(canvasPane,BorderLayout.CENTER);
         this.add(buttonPanel,BorderLayout.PAGE_END);
+        
+    }
+
+    public void initCanvas() {
+        // event canvas
+        this.canvas.setGridX(false);
+        this.canvas.setGridY(false);
+        this.canvas.setAxisFontSize(10);
+        this.canvas.setTitleFontSize(16);
+        this.canvas.setAxisTitleFontSize(14);
+        this.canvas.setStatBoxFontSize(8);
     }
 
     public void add(IDataSet ds, String opt){
         this.container.add(ds);
         this.options.add(opt);
     }
-
     
     public void drawNextBack(boolean back){
         int npads   = this.nDivisionsX*this.nDivisionsY;
-        int counter = 0;
-        int elements =1;
+        int counter = 0, npp=1;
+        findelement();
         if(back){
-            for(int i=(this.currentPosition); i<this.container.size(); i++){
-               if(this.options.get(i).contains("same"))elements++;
-               else break;
-            }
             this.currentPosition-=(2*elements*npads);
-            if(this.currentPosition>=this.container.size() || this.currentPosition<=0){
-                
+            if(this.currentPosition>=this.container.size() ){
                 this.currentPosition = this.container.size()-(2*elements*npads);
-            }        
+            }      
+            else if (this.currentPosition<=0){ 
+                if(this.currentPosition<=-1*npads){
+                    this.currentPosition= this.container.size()-(2*elements*npads);
+                }
+                else{     
+                this.currentPosition = 0;
+                }
+                findelement();
+            }
         }
         else{
-            if(this.currentPosition>=this.container.size()){
+            if(this.currentPosition>=this.container.size() || this.currentPosition<=0){
             this.currentPosition = 0;
+            findelement();
             }
         }
-        
+       
+         
         canvas.divide(this.nDivisionsX,this.nDivisionsY);
         canvas.cd(counter);
-        this.initCanvas();
-            
         while(this.currentPosition<this.container.size()&&counter<npads){
             IDataSet ds = this.container.get(this.currentPosition);
-            String   op = this.options.get(this.currentPosition);            
+            String   op = this.options.get(this.currentPosition);    
+       
             if(op.contains("same")==false){
-//                System.out.println(" (    ) "  + this.currentPosition + 
-//                        " on pad " + counter+"   "+ds.getName());
+                //System.out.println(" (    ) "  + this.currentPosition + 
+                //        " on pad " + counter+"   "+ds.getName());
                 canvas.cd(counter);
-                canvas.draw(ds, "");
                 this.initCanvas();
-                counter++;
+                canvas.draw(ds,op);
+                
             } else {
-//                System.out.println(" Drawing Position (same)"  + this.currentPosition + 
-//                        " on pad " + counter+"   "+ds.getName());
-                canvas.draw(ds, "same");
+                //System.out.println(" (same) "  + this.currentPosition + 
+                //        " on pad " + counter+"   "+ds.getName());
+                canvas.draw(ds, "op+same");
+            }
+            
+            if(npp==elements){
+                counter++;
+                npp=0;
             }
             this.currentPosition++;
+            npp++;
         }
     }
    
-    public void reset(){
-        this.currentPosition = 0;
-        
+    public void findelement(){
+        int first=0;
+        elements=1;
+        for(int i=this.currentPosition; i<this.container.size(); i++){
+            if(this.options.get(i).contains("same") && first<=1){
+               elements++;
+            }
+            else if(this.options.get(i).contains("same")==false)first++;
+            else break;
+        }        
     }
     
+    public void reset(){
+        this.currentPosition = 0;        
+    }
 
     public void actionPerformed(ActionEvent e) {
-        System.out.println("action " + e.getActionCommand());
+//        System.out.println("action " + e.getActionCommand());
         if(e.getActionCommand().compareTo("Next >")==0){
             this.drawNextBack(backward);
         }
@@ -164,28 +179,13 @@ public class BookCanvas extends JPanel implements ActionListener {
            this.drawNextBack(backward);
         }
         
-        if(e.getActionCommand().compareTo("comboBoxChanged")==0){
-            String selection = (String) this.comboDivide.getSelectedItem();
-            System.out.println("Changed to " + selection);
-            if(selection.compareTo("1x1")==0){
-                this.nDivisionsX = 1;
-                this.nDivisionsY = 1;
-                this.reset();
-            }
-            
-            if(selection.compareTo("2x2")==0){
-                this.nDivisionsX = 2;
-                this.nDivisionsY = 2;
-                this.reset();
-            }
-        }
-        if (e.getActionCommand().compareTo("Save to File") == 0) {
-            this.saveToFile();
+        if (e.getActionCommand().compareTo("Print...") == 0) {
+            this.printToFile();
            
         }
     }
     
-     private void saveToFile() {
+    private void printToFile() {
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File("File.PNG"));
         int returnValue = fc.showSaveDialog(null);
