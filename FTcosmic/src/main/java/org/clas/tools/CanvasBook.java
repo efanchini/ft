@@ -6,7 +6,6 @@
 package org.clas.tools;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,17 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JColorChooser;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
-import org.root.attr.TStyle;
 import org.root.base.IDataSet;
-import org.root.func.F1D;
-import org.root.func.RandomFunc;
-import org.root.histogram.H1D;
 import org.root.basic.EmbeddedCanvas;
 
 

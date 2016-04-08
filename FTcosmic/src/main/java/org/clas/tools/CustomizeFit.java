@@ -42,6 +42,8 @@ public class CustomizeFit {
         this.hist=h;
         this.fct=f;
         this.newfct=f;
+        this.pars.clear();
+        this.err_pars.clear();
         int npar = f.getNParams();
 
         CustomPanel panel = new CustomPanel();

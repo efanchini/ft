@@ -93,7 +93,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
     H1D H_TIME_MEAN    = null;
     H1D H_TIME_SIGMA   = null;
     H1D H_TIME_CHI2    = null;
-    final CustomizeFit cfit = new CustomizeFit();
+    CustomizeFit cfit = new CustomizeFit();
     
     double[] crystalID; 
     double[] pedestalMEAN;
@@ -482,6 +482,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         
         crystalID       = new double[viewFTCAL.getNComponents()];
         pedestalMEAN    = new double[viewFTCAL.getNComponents()];
+        pedestalRMS     = new double[viewFTCAL.getNComponents()];
         noiseRMS        = new double[viewFTCAL.getNComponents()];
         timeCross       = new double[viewFTCAL.getNComponents()];
         timeHalf        = new double[viewFTCAL.getNComponents()];
@@ -544,10 +545,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         H1D hcosmic = H_COSMIC_CHARGE.get(0,0,key);
         initLandauFitPar(key);
         hcosmic.fit(mylandau.get(0, 0, key),"LQ");
-        H_COSMIC_MEAN.setBinContent(key, mylandau.get(0, 0, key).getParameter(1));
-        H_COSMIC_SIGMA.setBinContent(key, mylandau.get(0, 0, key).getParameter(2));
-        H_COSMIC_CHI2.setBinContent(key, mylandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
-                                        /mylandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet()));
+        this.updateFitResults(key);
     }
 
     private void initTimeGaussFitPar(int key, H1D htime) {
@@ -567,10 +565,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         H1D htime = H_COSMIC_THALF.get(0,0,key);
         initTimeGaussFitPar(key,htime);
         htime.fit(myTimeGauss.get(0, 0, key),"NQ");
-        H_TIME_MEAN.setBinContent(key, myTimeGauss.get(0, 0, key).getParameter(1));
-        H_TIME_SIGMA.setBinContent(key, myTimeGauss.get(0, 0, key).getParameter(2));
-        H_TIME_CHI2.setBinContent(key, myTimeGauss.get(0, 0, key).getChiSquare(H_COSMIC_THALF.get(0,0,key),"NR")
-                                      /myTimeGauss.get(0, 0, key).getNDF(H_COSMIC_THALF.get(0,0,key).getDataSet()));
+        this.updateFitResults(key);
     }
     
     private void fitHistograms() {
@@ -587,6 +582,17 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         }
     }
     
+    private void updateFitResults(int key){
+        H_COSMIC_MEAN.setBinContent(key, mylandau.get(0, 0, key).getParameter(1));
+        H_COSMIC_SIGMA.setBinContent(key, mylandau.get(0, 0, key).getParameter(2));
+        H_COSMIC_CHI2.setBinContent(key, mylandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
+                                        /mylandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet()));
+        H_TIME_MEAN.setBinContent(key, myTimeGauss.get(0, 0, key).getParameter(1));
+        H_TIME_SIGMA.setBinContent(key, myTimeGauss.get(0, 0, key).getParameter(2));
+        H_TIME_CHI2.setBinContent(key, myTimeGauss.get(0, 0, key).getChiSquare(H_COSMIC_THALF.get(0,0,key),"NR")
+                                      /myTimeGauss.get(0, 0, key).getNDF(H_COSMIC_THALF.get(0,0,key).getDataSet()));
+    }
+    
     private void customizeFit(){     
         if(plotSelect==2) {
             cfit.FitPanel(H_COSMIC_CHARGE.get(0,0,keySelect), mylandau.get(0,0,keySelect));
@@ -596,6 +602,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
             cfit.FitPanel(H_COSMIC_THALF.get(0,0,keySelect), myTimeGauss.get(0,0,keySelect));
             this.canvasTime.update();            
         }
+        this.updateFitResults(keySelect);
    }
     
     private void cosmicsBook(DetectorCollection<H1D> h, DetectorCollection<F1D> f){
@@ -714,12 +721,13 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         int ipointer=0;
         for(int key : viewFTCAL.getViewComponents()) {
             pedestalMEAN[ipointer] = H_PED.get(0,0,key).getMean();
+            pedestalRMS[ipointer]  = H_PED.get(0,0,key).getRMS();
             noiseRMS[ipointer]     = H_NOISE.get(0, 0, key).getMean();
             timeCross[ipointer]    = H_COSMIC_TCROSS.get(0, 0, key).getMean();
             timeHalf[ipointer]     = H_COSMIC_THALF.get(0, 0, key).getMean();
             ipointer++;
         }
-        GraphErrors  G_PED = new GraphErrors(crystalID,pedestalMEAN);
+        GraphErrors  G_PED = new GraphErrors(crystalID,pedestalRMS);
         G_PED.setTitle(" "); //  title
         G_PED.setXTitle("Crystal ID"); // X axis title
         G_PED.setYTitle("Pedestal RMS (mV)");   // Y axis title
