@@ -393,7 +393,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
     public void initHistograms() {
         for (int component = 0; component < 505; component++) {
-            if(doesThisCrystalExist(component) || component>500) {
+            if(doesThisCrystalExist(component) || component>=500) {
 
                 int iy = component / 22;
                 int ix = component - iy * 22;
@@ -703,9 +703,13 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
             int i1=(int) max(0,iy-ncry_cosmic-1);    // allowing for +/- to cope with dead channels
             int i2=(int) min(22,iy+ncry_cosmic+1);
             for(int i=i1; i<=i2; i++) {
+//                threshold=12;
+//                if(ix==-9 && (i==-6 || i==-5 || i==-4 || i==-3 || i==-2 || i==-1)) threshold=4;
+//                if(ix==-9 && (i== 6 ||          i==4  || i==3  || i==2  || i==1)) threshold=6;
                 if(i!=iy && doesThisCrystalExist(i*22+ix)) {
 //                    System.out.println(ix + " " + iy + " " + i1 + " " + i2 + " " + i + " " +H_WMAX.getBinContent(i*22+ix));
-                    if(H_WMAX.getBinContent(i*22+ix)>threshold && H_TCROSS.getBinContent(i*22+ix)>0) nCrystalInColumn++;                    
+//                    if(H_WMAX.getBinContent(i*22+ix)>threshold && H_TCROSS.getBinContent(i*22+ix)>0) nCrystalInColumn++;                    
+                    if(H_WMAX.getBinContent(i*22+ix)>threshold ) nCrystalInColumn++;                    
                 }
             }
             if(nCrystalInColumn>=ncry_cosmic) {
