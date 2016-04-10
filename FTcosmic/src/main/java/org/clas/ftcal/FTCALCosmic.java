@@ -30,11 +30,9 @@ import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.calib.DetectorShapeTabView;
 import org.jlab.clas12.calib.IDetectorListener;
-import org.jlab.clas12.detector.DetectorChannel;
 import org.jlab.clas12.detector.DetectorCounter;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCBasicFitter;
-import org.jlab.clas12.detector.IFADCFitter;
 import org.jlab.containers.HashTable;
 import org.jlab.containers.HashTableViewer;
 import org.jlab.containers.IHashTableListener;
@@ -42,23 +40,24 @@ import org.root.attr.ColorPalette;
 import org.root.func.F1D;
 import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
-import org.root.basic.EmbeddedCanvas;
 import org.clas.tools.CustomizeFit;
 import org.clas.tools.ExtendedFADCFitter;
+import org.clas.tools.FTDataSet;
 import org.clas.tools.Miscellaneous;
+import org.clas.tools.NoGridCanvas;
 
 public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionListener,ChangeListener{
 
     // detector view
-    FTCALView viewFTCAL = new FTCALView("FTCAL");
-    
+    FTCALDetector viewFTCAL = new FTCALDetector("FTCAL");            
+            
     // panels and canvases
     JPanel detectorPanel;
     ColorPalette palette = new ColorPalette();
-    EmbeddedCanvas canvasEvent     = new EmbeddedCanvas();
-    EmbeddedCanvas canvasNoise     = new EmbeddedCanvas();
-    EmbeddedCanvas canvasEnergy    = new EmbeddedCanvas();
-    EmbeddedCanvas canvasTime      = new EmbeddedCanvas();
+    NoGridCanvas canvasEvent     = new NoGridCanvas();
+    NoGridCanvas canvasNoise     = new NoGridCanvas(2,2);
+    NoGridCanvas canvasEnergy    = new NoGridCanvas(2,2);
+    NoGridCanvas canvasTime      = new NoGridCanvas(2,2);
     DetectorShapeTabView view      = new DetectorShapeTabView();
 
     HashTable  summaryTable   = null; 
@@ -172,7 +171,6 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         tabbedPane.add("Time"        ,this.canvasTime);
         tabbedPane.add("Summary"     ,canvasTable);
         tabbedPane.addChangeListener(this);
-        this.initCanvas();
         
         JPanel canvasPane = new JPanel();
         canvasPane.setLayout(new BorderLayout());
@@ -254,110 +252,11 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
 
     }
 
-    public void initCanvas() {
-        // event canvas
-        this.canvasEvent.setGridX(false);
-        this.canvasEvent.setGridY(false);
-        this.canvasEvent.setAxisFontSize(10);
-        this.canvasEvent.setTitleFontSize(16);
-        this.canvasEvent.setAxisTitleFontSize(14);
-        this.canvasEvent.setStatBoxFontSize(8);
-        // noise
-        this.canvasNoise.divide(2, 2);
-        this.canvasNoise.cd(0);
-        this.canvasNoise.setGridX(false);
-        this.canvasNoise.setGridY(false);
-        this.canvasNoise.setAxisFontSize(10);
-        this.canvasNoise.setTitleFontSize(16);
-        this.canvasNoise.setAxisTitleFontSize(14);
-        this.canvasNoise.setStatBoxFontSize(8);
-        this.canvasNoise.cd(1);
-        this.canvasNoise.setGridX(false);
-        this.canvasNoise.setGridY(false);
-        this.canvasNoise.setAxisFontSize(10);
-        this.canvasNoise.setTitleFontSize(16);
-        this.canvasNoise.setAxisTitleFontSize(14);
-        this.canvasNoise.setStatBoxFontSize(8);
-        this.canvasNoise.cd(2);
-        this.canvasNoise.setGridX(false);
-        this.canvasNoise.setGridY(false);
-        this.canvasNoise.setAxisFontSize(10);
-        this.canvasNoise.setTitleFontSize(16);
-        this.canvasNoise.setAxisTitleFontSize(14);
-        this.canvasNoise.setStatBoxFontSize(8);
-        this.canvasNoise.cd(3);
-        this.canvasNoise.setGridX(false);
-        this.canvasNoise.setGridY(false);
-        this.canvasNoise.setAxisFontSize(10);
-        this.canvasNoise.setTitleFontSize(16);
-        this.canvasNoise.setAxisTitleFontSize(14);
-        this.canvasNoise.setStatBoxFontSize(8);
-        // energy
-        this.canvasEnergy.divide(2, 2);
-        this.canvasEnergy.cd(0);
-        this.canvasEnergy.setGridX(false);
-        this.canvasEnergy.setGridY(false);
-        this.canvasEnergy.setAxisFontSize(10);
-        this.canvasEnergy.setTitleFontSize(16);
-        this.canvasEnergy.setAxisTitleFontSize(14);
-        this.canvasEnergy.setStatBoxFontSize(8);
-        this.canvasEnergy.cd(1);
-        this.canvasEnergy.setGridX(false);
-        this.canvasEnergy.setGridY(false);
-        this.canvasEnergy.setAxisFontSize(10);
-        this.canvasEnergy.setTitleFontSize(16);
-        this.canvasEnergy.setAxisTitleFontSize(14);
-        this.canvasEnergy.setStatBoxFontSize(8);
-        this.canvasEnergy.cd(2);
-        this.canvasEnergy.setGridX(false);
-        this.canvasEnergy.setGridY(false);
-        this.canvasEnergy.setAxisFontSize(10);
-        this.canvasEnergy.setTitleFontSize(16);
-        this.canvasEnergy.setAxisTitleFontSize(14);
-        this.canvasEnergy.setStatBoxFontSize(8);
-        this.canvasEnergy.cd(3);
-        this.canvasEnergy.setGridX(false);
-        this.canvasEnergy.setGridY(false);
-        this.canvasEnergy.setAxisFontSize(10);
-        this.canvasEnergy.setTitleFontSize(16);
-        this.canvasEnergy.setAxisTitleFontSize(14);
-        this.canvasEnergy.setStatBoxFontSize(8);
-        // time
-        this.canvasTime.divide(2, 2);
-        this.canvasTime.cd(0);
-        this.canvasTime.setGridX(false);
-        this.canvasTime.setGridY(false);
-        this.canvasTime.setAxisFontSize(10);
-        this.canvasTime.setTitleFontSize(16);
-        this.canvasTime.setAxisTitleFontSize(14);
-        this.canvasTime.setStatBoxFontSize(8);
-        this.canvasTime.cd(1);
-        this.canvasTime.setGridX(false);
-        this.canvasTime.setGridY(false);
-        this.canvasTime.setAxisFontSize(10);
-        this.canvasTime.setTitleFontSize(16);
-        this.canvasTime.setAxisTitleFontSize(14);
-        this.canvasTime.setStatBoxFontSize(8);
-        this.canvasTime.cd(2);
-        this.canvasTime.setGridX(false);
-        this.canvasTime.setGridY(false);
-        this.canvasTime.setAxisFontSize(10);
-        this.canvasTime.setTitleFontSize(16);
-        this.canvasTime.setAxisTitleFontSize(14);
-        this.canvasTime.setStatBoxFontSize(8);
-        this.canvasTime.cd(3);
-        this.canvasTime.setGridX(false);
-        this.canvasTime.setGridY(false);
-        this.canvasTime.setAxisFontSize(10);
-        this.canvasTime.setTitleFontSize(16);
-        this.canvasTime.setAxisTitleFontSize(14);
-        this.canvasTime.setStatBoxFontSize(8);
-    }
 
     private void initTable() {
         summaryTable = new HashTable(3,"Pedestal:d","Noise:i","N. Events:i","Energy Mean:d","Energy Sigma:d","Energy Chi2:d","Time Mean:d","Time Sigma:d");
         double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1, -1};
-        for (int component : viewFTCAL.getViewComponents()) {
+        for (int component : viewFTCAL.getDetectorComponents()) {
             summaryTable.addRow(summaryInitialValues,0,0,component);
             summaryTable.addConstrain(3, 160.0, 240.0);
             summaryTable.addConstrain(4, 1.0, 1.5); 
@@ -419,15 +318,17 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
     }
      
     public void initHistograms() {
-        for (int component : this.viewFTCAL.getViewComponents()) {
+        FTDataSet ff = new FTDataSet(viewFTCAL);
+        H_PED = ff.addCollection(new H1D("Pedestal", 400, 100., 300.0));
+        for (int component : this.viewFTCAL.getDetectorComponents()) {
             int ix = viewFTCAL.getIdX(component);
             int iy = viewFTCAL.getIdY(component);
             String title = "Crystal " + component + " (" + ix + "," + iy + ")";
             H_fADC.add(0, 0, component, new H1D("fADC_" + component, title, 100, 0.0, 100.0));
-            H_PED.add(0, 0, component, new H1D("Pedestal_" + component, title, 400, 100., 300.0));
-            H_PED.get(0, 0, component).setFillColor(2);
-            H_PED.get(0, 0, component).setXTitle("Pedestal (fADC counts)");
-            H_PED.get(0, 0, component).setYTitle("Counts");                        
+//            H_PED.add(0, 0, component, new H1D("Pedestal_" + component, title, 400, 100., 300.0));
+//            H_PED.get(0, 0, component).setFillColor(2);
+//            H_PED.get(0, 0, component).setXTitle("Pedestal (fADC counts)");
+//            H_PED.get(0, 0, component).setYTitle("Counts");                        
             H_NOISE.add(0, 0, component, new H1D("Noise_" + component, title, 200, 0.0, 10.0));
             H_NOISE.get(0, 0, component).setFillColor(4);
             H_NOISE.get(0, 0, component).setXTitle("RMS (mV)");
@@ -469,16 +370,16 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
                 else                                       thresholdValue.add(0, 0, component, threshold/3.);
             }
         }
-        H_fADC_N       = new H1D("fADC"  , 504, 0, 504);
-        H_WMAX         = new H1D("WMAX"  , 504, 0, 504);
-        H_TCROSS       = new H1D("TCROSS", 504, 0, 504);
-        H_COSMIC_N     = new H1D("EVENT" , 504, 0, 504);
-        H_COSMIC_MEAN  = new H1D("MEAN"  , 504, 0, 504);
-        H_COSMIC_SIGMA = new H1D("SIGMA" , 504, 0, 504);
-        H_COSMIC_CHI2  = new H1D("CHI2"  , 504, 0, 504);
-        H_TIME_MEAN    = new H1D("MEAN"  , 504, 0, 504);
-        H_TIME_SIGMA   = new H1D("SIGMA" , 504, 0, 504);
-        H_TIME_CHI2    = new H1D("CHI2"  , 504, 0, 504);
+        H_fADC_N       = new H1D("fADC"  , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_WMAX         = new H1D("WMAX"  , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_TCROSS       = new H1D("TCROSS", viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_COSMIC_N     = new H1D("EVENT" , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_COSMIC_MEAN  = new H1D("MEAN"  , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_COSMIC_SIGMA = new H1D("SIGMA" , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_COSMIC_CHI2  = new H1D("CHI2"  , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_TIME_MEAN    = new H1D("MEAN"  , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_TIME_SIGMA   = new H1D("SIGMA" , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
+        H_TIME_CHI2    = new H1D("CHI2"  , viewFTCAL.getComponentMaxCount(), 0, viewFTCAL.getComponentMaxCount());
         
         crystalID       = new double[viewFTCAL.getNComponents()];
         pedestalMEAN    = new double[viewFTCAL.getNComponents()];
@@ -495,7 +396,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
     }
 
     public void resetHistograms() { 
-        for (int component : viewFTCAL.getViewComponents()) {
+        for (int component : viewFTCAL.getDetectorComponents()) {
             if(H_fADC.hasEntry(0, 0, component)) {
                 H_fADC.get(0, 0, component).reset();
                 H_NOISE.get(0, 0, component).reset();
@@ -719,7 +620,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
         this.canvasEvent.draw(H_WAVE.get(0, 0, keySelect));
         // noise
         int ipointer=0;
-        for(int key : viewFTCAL.getViewComponents()) {
+        for(int key : viewFTCAL.getDetectorComponents()) {
             pedestalMEAN[ipointer] = H_PED.get(0,0,key).getMean();
             pedestalRMS[ipointer]  = H_PED.get(0,0,key).getRMS();
             noiseRMS[ipointer]     = H_NOISE.get(0, 0, key).getMean();
@@ -938,7 +839,7 @@ public class FTCALCosmic implements IDetectorListener,IHashTableListener,ActionL
     }
 
     private void updateTable() {
-        for(int key : viewFTCAL.getViewComponents()) {
+        for(int key : viewFTCAL.getDetectorComponents()) {
             String pedestal = String.format ("%.1f", H_PED.get(0, 0, key).getMean());
             String noise    = String.format ("%.2f", H_NOISE.get(0, 0, key).getMean());
             String nev      = String.format ("%d",   H_COSMIC_CHARGE.get(0,0,key).getEntries());
