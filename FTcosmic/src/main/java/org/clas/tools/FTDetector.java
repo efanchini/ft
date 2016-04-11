@@ -6,6 +6,7 @@
 package org.clas.tools;
 
 import java.util.Set;
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.calib.DetectorShapeView2D;
 
 /**
@@ -18,11 +19,16 @@ public abstract class FTDetector extends DetectorShapeView2D {
         super(name);
     }
     
+    public abstract int getNComponents(); // return the total number of components
+
     public abstract Set<Integer> getDetectorComponents() ;
+    
+    public abstract DetectorCollection<Double> getThresholds();
     
     public abstract boolean hasComponent(int component);  
     
-    public abstract int getNComponents(); // return the total number of components
+    public abstract String getComponentName(int component);
     
+    public abstract int[] getIDArray(); 
     
 }

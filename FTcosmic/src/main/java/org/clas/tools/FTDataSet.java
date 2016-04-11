@@ -25,7 +25,7 @@ public class FTDataSet {
         DetectorCollection h = new DetectorCollection();
         for(int key : this.ft.getDetectorComponents()) {
             H1D histoComponent = histo.histClone(histo.getName() + "_" + key);
-//            histoComponent.setTitle("Component " + key + " (" + ft.ge + "," + iy + ")";);
+            histoComponent.setTitle("Component " + key + this.ft.getComponentName(key));
             h.add(0,0,key,histoComponent);
         }
         return h;
@@ -35,6 +35,10 @@ public class FTDataSet {
         DetectorCollection h = new DetectorCollection();
         for(int key : this.ft.getDetectorComponents()) {
             H1D histoComponent = histo.histClone(histo.getName() + "_" + key);
+            histoComponent.setTitle("Component " + key + " " + this.ft.getComponentName(key));
+            histoComponent.setXTitle(XTitle);
+            histoComponent.setYTitle(YTitle);
+            histoComponent.setFillColor(Col);
             h.add(0,0,key,histoComponent);
         }
         return h;
@@ -43,12 +47,20 @@ public class FTDataSet {
     public DetectorCollection addCollection(F1D funct) {
         DetectorCollection f = new DetectorCollection();
         for(int key : this.ft.getDetectorComponents()) {
-            F1D functComponent = new F1D(funct.getName(),funct.getMin(),funct.getMax());
-            f.add(0,0,key,functComponent);
+            f.add(0,0,key,funct);
         }
         return f;
     }
     
+    public DetectorCollection addCollection(F1D funct, String name) {
+        DetectorCollection f = new DetectorCollection();
+        for(int key : this.ft.getDetectorComponents()) {
+            funct.setName(name + "_" + key);
+            f.add(0,0,key,funct);
+        }
+        return f;
+    }
+
     public DetectorCollection addCollection(GraphErrors graf) {
         DetectorCollection g = new DetectorCollection();
         for(int key : this.ft.getDetectorComponents()) {

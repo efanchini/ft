@@ -29,7 +29,8 @@ public class FTCALDetector extends FTDetector {
     private double y0=0;
     
     private DetectorCollection<ShapePoint> points = new DetectorCollection<ShapePoint>();
-    
+    DetectorCollection<Double> thresholds = new DetectorCollection<Double>();
+        
 
     public FTCALDetector(String name) {
         super(name);
@@ -87,6 +88,28 @@ public class FTCALDetector extends FTDetector {
         this.addShape(paddle);
     }
     
+    
+    public void setThresholds(double threshold) {
+        for (int component : this.getDetectorComponents()) {
+            int ix = this.getIdX(component);
+            int iy = this.getIdY(component);
+            if(ix!=-9) {
+                thresholds.add(0, 0, component, threshold);
+            }
+            else if(ix==-9) {
+//                    if     (iy==-6 || iy==-5 || iy==-4 || iy==-3 || iy==-2 || iy==-1) thresholdValue.add(0, 0, component, threshold/3.);     
+//                    else if(iy== 6 ||           iy==4  || iy==3  || iy==2  || iy==1 ) thresholdValue.add(0, 0, component, threshold/2.);
+//                    else                                                              thresholdValue.add(0, 0, component, threshold);
+                if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholds.add(0, 0, component, threshold);
+                else                                       thresholds.add(0, 0, component, threshold/3.);
+            }
+        }
+    }
+    
+    public DetectorCollection<Double> getThresholds() {
+        return this.thresholds;
+    }
+    
     public DetectorCollection getShapePoints() {
         return this.points;
     }
@@ -97,6 +120,11 @@ public class FTCALDetector extends FTDetector {
     
     public int getIdY(int component) {
         return this.points.get(0, 0, component).y();
+    }
+    
+    public String getComponentName(int component) {
+        String title = "(" + this.getIdX(component) + "," + this.getIdY(component) + ")";
+        return title;
     }
     
     public Set<Integer> getDetectorComponents() {
