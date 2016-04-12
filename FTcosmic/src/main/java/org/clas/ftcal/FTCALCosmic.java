@@ -785,7 +785,7 @@ public class FTCALCosmic implements IDetectorListener,IFTHashTableListener,Actio
         
       
         calib.addToMap("histograms", H_COSMIC_CHARGE);
-        calib.addToMap("fitfunctions", mylandau);
+        calib.addToMap("fitfunctions", F_ChargeLandau);
         //calib.addToMap("other", H_COSMIC_CHARGE.get(0, 0, 269));
         //calib.addToMap("other", H_COSMIC_CHARGE.get(0, 0, 268));
         String hipofile = extra.extractFileName("", "",".hipo");
