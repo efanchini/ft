@@ -6,6 +6,7 @@
 package org.clas.tools;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,7 +25,7 @@ import org.root.basic.EmbeddedCanvas;
 
 /**
  *
- * @author louiseclark
+ * @author louiseclark & fanchini
  */
 
 
@@ -69,7 +70,7 @@ public class CanvasBook extends JPanel implements ActionListener {
         canvasPane.setLayout(new BorderLayout());
         canvasPane.setBorder(BorderFactory.createEtchedBorder(EtchedBorder.RAISED));
         canvasPane.add(canvas,BorderLayout.CENTER);
-
+        canvasPane.setPreferredSize(new Dimension(1100,900));
         this.add(canvasPane,BorderLayout.CENTER);
         this.add(buttonPanel,BorderLayout.PAGE_END);
         
@@ -179,6 +180,7 @@ public class CanvasBook extends JPanel implements ActionListener {
     }
     
     private void printToFile() {
+        // Does not work properly //
         JFileChooser fc = new JFileChooser();
         fc.setCurrentDirectory(new File("File.PNG"));
         int returnValue = fc.showSaveDialog(null);

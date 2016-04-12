@@ -41,23 +41,23 @@ public class FitData {
             for(int key : histo.getComponents(0, 0)){
                 if(myfct.hasEntry(0, 0, key)){
                     fout.print(key+"\t");
-                    System.out.print(key+"\t");
+                    //System.out.print(key+"\t");
                     for(int i=0; i<ip; i++){
                         fout.printf("%.3f \t %.3f \t",myfct.get(0,0,key).getParameter(i),myfct.get(0,0,key).parameter(i).error());
-                        System.out.printf("%.3f \t %.3f \t",myfct.get(0,0,key).getParameter(i),myfct.get(0,0,key).parameter(i).error());
+                        //System.out.printf("%.3f \t %.3f \t",myfct.get(0,0,key).getParameter(i),myfct.get(0,0,key).parameter(i).error());
                     }    
                     fout.print(format.format(myfct.get(0, 0, key).getChiSquare(histo.get(0,0,key),"NR"))+"\t"+myfct.get(0, 0, key).getNDF(histo.get(0,0,key).getDataSet())
                                     +"\t"+histo.get(0,0,key).getEntries()+"\n");
-                    System.out.print(format.format(myfct.get(0, 0, key).getChiSquare(histo.get(0,0,key),"NR"))+"\t"+myfct.get(0, 0, key).getNDF(histo.get(0,0,key).getDataSet())
-                                    +"\t"+histo.get(0,0,key).getEntries()+"\n");
+                   // System.out.print(format.format(myfct.get(0, 0, key).getChiSquare(histo.get(0,0,key),"NR"))+"\t"+myfct.get(0, 0, key).getNDF(histo.get(0,0,key).getDataSet())
+                   //                 +"\t"+histo.get(0,0,key).getEntries()+"\n");
                 }
                 else {
                     for(int i=0; i<ip; i++){
                         fout.printf("0.000 \t 0.000 \t");
-                        System.out.printf("0.000 \t 0.000 \t");
+                        //System.out.printf("0.000 \t 0.000 \t");
                     }
                      fout.print("0.000 \t 0.000 \t"+histo.get(0,0,key).getEntries()+"\n");
-                    System.out.print("0.000 \t 0.000 \t"+histo.get(0,0,key).getEntries()+"\n");
+                    //System.out.print("0.000 \t 0.000 \t"+histo.get(0,0,key).getEntries()+"\n");
                 }
             }
             fout.close();
