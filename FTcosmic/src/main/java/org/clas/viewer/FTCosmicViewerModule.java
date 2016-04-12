@@ -10,8 +10,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
 
 
 import org.clas.ftcal.FTCALCosmic;
@@ -19,10 +17,6 @@ import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.basic.IDetectorModule;
 import org.jlab.clas12.basic.IDetectorProcessor;
-import org.jlab.clas12.calib.DetectorShape2D;
-import org.jlab.clas12.calib.DetectorShapeTabView;
-import org.jlab.clas12.calib.DetectorShapeView2D;
-import org.jlab.clas12.calib.IDetectorListener;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clasrec.main.DetectorEventProcessorPane;
 import org.jlab.data.io.DataEvent;

@@ -24,8 +24,12 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import org.clas.tools.CalibrationData;
+
 import org.clas.containers.FTHashTable;
 import org.clas.containers.FTHashTableViewer;
+
 
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
@@ -44,9 +48,14 @@ import org.clas.tools.CustomizeFit;
 import org.clas.tools.ExtendedFADCFitter;
 import org.clas.tools.FTDataSet;
 import org.clas.tools.Miscellaneous;
+
+import org.root.pad.TCanvas;
+import org.root.pad.TGCanvas;
+
 import org.clas.tools.NoGridCanvas;
 import org.clas.containers.IFTHashTableListener;
 import org.clas.tools.FTApplication;
+
 
 
 public class FTCALCosmic implements IDetectorListener,IFTHashTableListener,ActionListener,ChangeListener{
@@ -402,6 +411,7 @@ public class FTCALCosmic implements IDetectorListener,IFTHashTableListener,Actio
 
     private void fitTime(int key) {
         H1D htime = H_COSMIC_THALF.get(0,0,key);
+        
         initTimeGaussFitPar(key,htime);
         htime.fit(F_TimeGauss.get(0, 0, key),"NQ");
         this.updateFitResults(key);
@@ -410,11 +420,11 @@ public class FTCALCosmic implements IDetectorListener,IFTHashTableListener,Actio
     private void fitHistograms() {
         for(int key : H_COSMIC_CHARGE.getComponents(0, 0)) {
             if(H_COSMIC_CHARGE.get(0, 0, key).getEntries()>100) {
-                System.out.println("Fitting charge histos for component: " + key);
+                //System.out.println("Fitting charge histos for component: " + key);
                 this.fitLandau(key);
             }
-            else System.out.println("Skipping charge fit of component: " + key + 
-                                    ", only " + H_COSMIC_CHARGE.get(0, 0, key).getEntries() + " events");
+            //else System.out.println("Skipping charge fit of component: " + key + 
+            //                        ", only " + H_COSMIC_CHARGE.get(0, 0, key).getEntries() + " events");
             if(H_COSMIC_THALF.get(0,0,key).getEntries()>0) {        
                 this.fitTime(key);
             }   
@@ -753,9 +763,9 @@ public class FTCALCosmic implements IDetectorListener,IFTHashTableListener,Actio
 //            cosmicFile.writeToFile(outputFileName);
 //        }
         Miscellaneous extra = new Miscellaneous();
-        String outputFileName = "./"+extra.datetime()+"_Fit.txt";
-        String filename;
+        CalibrationData calib = new CalibrationData();
         
+        String outputFileName = extra.extractFileName("", "_Fit",".txt");
         this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -764,11 +774,36 @@ public class FTCALCosmic implements IDetectorListener,IFTHashTableListener,Actio
             FitData cosmicFile = new FitData(F_ChargeLandau,H_COSMIC_CHARGE);
             cosmicFile.writeToFile(outputFileName);
         }
-        String CCDBoutFile = "./"+extra.datetime()+"_CCDB.txt";
+
+	    //      String CCDBoutFile = "./"+extra.datetime()+"_CCDB.txt";
 //        extra.CCDBcosmic(F_ChargeLandau, H_PED, CCDBoutFile);
-        String outputname = extra.extractstring(outputFileName);
+//        String outputname = extra.extractstring(outputFileName);
+
         
-//        extra.evioclas.eviofile(H_COSMIC_CHARGE, mylandau, outputname);
+        String CCDBoutFile = extra.extractFileName("", "_CCDB",".txt");
+        //extra.CCDBcosmic(mylandau, H_PED, CCDBoutFile); // Da reinserire //
+        
+      
+        calib.addToMap("histograms", H_COSMIC_CHARGE);
+        calib.addToMap("fitfunctions", mylandau);
+        //calib.addToMap("other", H_COSMIC_CHARGE.get(0, 0, 269));
+        //calib.addToMap("other", H_COSMIC_CHARGE.get(0, 0, 268));
+        String hipofile = extra.extractFileName("", "",".hipo");
+        calib.fileWrite(hipofile);
+        //calib.ls(hipofile);
+        
+        calib.readCosmicCalibFile(hipofile);
+        DetectorCollection<H1D> H_calibration = calib.H_extracted;
+        DetectorCollection<F1D> F_calibration = calib.F_extracted;
+       
+        
+//        TGCanvas cc = new TGCanvas("","",600,600,2,1);
+//        cc.cd(0);
+//        cc.draw(H_COSMIC_CHARGE.get(0, 0, 269));
+//        cc.cd(1);
+//        cc.draw(H_calibration.get(0, 0, 269));
+        
+
     }
     
 
