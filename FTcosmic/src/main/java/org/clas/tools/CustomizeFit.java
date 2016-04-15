@@ -38,7 +38,7 @@ public class CustomizeFit {
     private double[] range =new double[2];
     
     
-    public void FitPanel(H1D h, F1D f){
+    public void FitPanel(H1D h, F1D f, String opt){
         this.hist=h;
         this.fct=f;
         this.newfct=f;
@@ -65,17 +65,17 @@ public class CustomizeFit {
             if(!panel.maxRange.getText().isEmpty())this.range[1] = Double.parseDouble(panel.maxRange.getText());
             else this.range[1] = f.getMax();
 
-            refit(); 
+            refit(opt); 
         }       
     }
 
-    public void refit(){
+    public void refit(String opt){
         this.newfct.setName("New fct");
         for(int i=0; i<this.pars.size(); i++){
             this.newfct.setParameter(i, this.pars.get(i));
         }
         this.newfct.setRange(range[0], range[1]);
-        this.hist.fit(this.newfct,"NR");
+        this.hist.fit(this.newfct,opt+"R");
         for(int i=0; i<this.pars.size(); i++){
             this.err_pars.add(this.newfct.parameter(i).error());
         }
@@ -84,7 +84,7 @@ public class CustomizeFit {
     }
     
     public String draw(){
-        this.FitPanel(this.hist, this.fct);
+        this.FitPanel(this.hist, this.fct,"");
         String panel="";
         return panel;
     }
@@ -115,10 +115,7 @@ public class CustomizeFit {
                                         npar+2, 2, //rows, cols
                                         6, 6,        //initX, initY
                                         6, 6);       //xPad, yPad
-                
-     
 	}
-        
     }    
    
 

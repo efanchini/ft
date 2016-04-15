@@ -20,6 +20,8 @@ public abstract class FTDetector extends DetectorShapeView2D {
     }
     
     public abstract int getNComponents(); // return the total number of components
+    
+    public abstract int getComponentMaxCount();
 
     public abstract Set<Integer> getDetectorComponents() ;
     
@@ -27,8 +29,20 @@ public abstract class FTDetector extends DetectorShapeView2D {
     
     public abstract boolean hasComponent(int component);  
     
+    public abstract boolean hasComponent(int ix, int iy);  
+
     public abstract String getComponentName(int component);
     
     public abstract int[] getIDArray(); 
     
+    public abstract int getIdX(int component);
+
+    public abstract int getIdY(int component);
+
+    public abstract int getIX(int component);
+
+    public abstract int getIY(int component);
+
+    public abstract int getComponent(int ix, int iy);
+
 }

@@ -121,7 +121,31 @@ public class FTCALDetector extends FTDetector {
     public int getIdY(int component) {
         return this.points.get(0, 0, component).y();
     }
+
+    public int getIX(int component) {
+        int i = this.points.get(0, 0, component).x();
+        if (i > 0) {
+            i = i + 10;
+        } else {
+            i = i + 11;
+        }
+        return i;
+    }
     
+    public int getIY(int component) {
+        int i = this.points.get(0, 0, component).y();
+        if (i > 0) {
+            i = i + 10;
+        } else {
+            i = i + 11;
+        }
+        return i;    
+    }
+
+    public int getComponent(int ix, int iy) {
+        return iy*nCrystalX+ix; 
+    }
+        
     public String getComponentName(int component) {
         String title = "(" + this.getIdX(component) + "," + this.getIdY(component) + ")";
         return title;
@@ -135,6 +159,11 @@ public class FTCALDetector extends FTDetector {
         return this.points.hasEntry(0, 0, component);
     }
     
+    public boolean hasComponent(int ix, int iy) {
+        int component = iy*nCrystalX+ix; 
+        return this.points.hasEntry(0, 0, component);
+    }
+
     public int getNComponents() {
         return this.points.getComponents(0, 0).size();
     }

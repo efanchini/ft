@@ -258,6 +258,11 @@ public class FTHashTable extends DefaultTableModel {
         return trow.get(column-ic).toString();
     }
     
+    public Object getValueAt(int column, int... index){        
+        FTTableRow  row = this.getRow(index);
+            return row.get(column);
+    }
+        
     public boolean isValid(int row, int column){
         if(this.constrains.containsKey(column)==false) return true;
         String value = (String) this.getValueAt(row, column);
@@ -267,8 +272,20 @@ public class FTHashTable extends DefaultTableModel {
     public boolean isRowValid(int row){
         boolean rowStatus=true;
         for(int column=0; column<this.getColumnCount(); column++) {
-            String value = (String) this.getValueAt(row, column);
-            if(!this.constrains.get(column).isValid(Double.parseDouble(value))) rowStatus = false; 
+            if(!this.isValid(row, column)) rowStatus = false; 
+        }
+        return rowStatus;
+    }
+
+    public boolean isRowValid(int... index){
+        boolean rowStatus=true;
+        for(int column=0; column<this.getColumnCount(); column++) {
+            if(this.constrains.containsKey(column)!=false) {
+//                System.out.println(index + " " + column + " " + this.getValueAt(column-index.length, index));
+                Double value = (Double) this.getValueAt(column-index.length, index);
+                boolean cellStatus=this.constrains.get(column).isValid(value.doubleValue());
+                if(!cellStatus) rowStatus=false;
+            }
         }
         return rowStatus;
     }

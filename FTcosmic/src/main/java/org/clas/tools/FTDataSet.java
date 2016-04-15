@@ -5,6 +5,7 @@
  */
 package org.clas.tools;
 
+import java.util.ArrayList;
 import org.jlab.clas.detector.DetectorCollection;
 import org.root.func.F1D;
 import org.root.histogram.GraphErrors;
@@ -16,6 +17,7 @@ import org.root.histogram.H1D;
  */
 public class FTDataSet {
     FTDetector ft;
+    ArrayList<DetectorCollection> dc = new ArrayList<DetectorCollection>();
 
     public FTDataSet(FTDetector d) {
         this.ft = d;
@@ -28,6 +30,7 @@ public class FTDataSet {
             histoComponent.setTitle("Component " + key + this.ft.getComponentName(key));
             h.add(0,0,key,histoComponent);
         }
+        this.dc.add(h);
         return h;
     }
 
@@ -41,6 +44,7 @@ public class FTDataSet {
             histoComponent.setFillColor(Col);
             h.add(0,0,key,histoComponent);
         }
+        this.dc.add(h);
         return h;
     }
 
@@ -49,6 +53,7 @@ public class FTDataSet {
         for(int key : this.ft.getDetectorComponents()) {
             f.add(0,0,key,funct);
         }
+        this.dc.add(f);
         return f;
     }
     
@@ -58,6 +63,7 @@ public class FTDataSet {
             funct.setName(name + "_" + key);
             f.add(0,0,key,funct);
         }
+        this.dc.add(f);
         return f;
     }
 
@@ -68,7 +74,8 @@ public class FTDataSet {
             graphComponent.setName(graf.getName());
             g.add(0,0,key,graphComponent);
         }
+        this.dc.add(g);
         return g;
     }
-
+    
 }

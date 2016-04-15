@@ -56,6 +56,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
         this.initRawDataDecoder();
         
         this.initDetector();
+        this.initApps();
         this.initHistograms();
         
         this.evPane.addProcessor(this);
@@ -75,9 +76,12 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
         
     }
 
-    private void initDetector() {
-        
+    private void initDetector() {        
         moduleFTCAL.initDetector();
+    }
+
+    private void initApps() {
+        moduleFTCAL.initApps();
     }
 
     private void initRawDataDecoder() {
@@ -85,7 +89,6 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     }
 
     private void initHistograms() {
-        moduleFTCAL.initHistograms();
     }
 
     private void resetHistograms() {
@@ -145,7 +148,6 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     public void detectorSelected(DetectorDescriptor dd) {
         //To change body of generated methods, choose Tools | Templates.
     }
-
   
     
   

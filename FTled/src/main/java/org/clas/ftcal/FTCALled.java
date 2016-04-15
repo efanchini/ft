@@ -46,7 +46,7 @@ import org.root.basic.EmbeddedCanvas;
 import org.root.data.DataVector;
 import org.root.base.PaveText;
 
-public class FTCALViewerModule implements IDetectorListener,IHashTableListener,ActionListener,ChangeListener{
+public class FTCALled implements IDetectorListener,IHashTableListener,ActionListener,ChangeListener{
 
     // panels and canvases
     JPanel detectorPanel;
@@ -135,7 +135,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
     
     
-    public FTCALViewerModule(){
+    public FTCALled(){
         this.detectorPanel=null;
         this.decoder=null;
     }
@@ -809,7 +809,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
 
         //    System.out.println("event #: " + nProcessed);
         List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
-        FTCALViewerModule.MyADCFitter fadcFitter = new FTCALViewerModule.MyADCFitter();
+        FTCALled.MyADCFitter fadcFitter = new FTCALled.MyADCFitter();
         H_WMAX.reset();
         H_TCROSS.reset();
         double tPMTCross=0;
