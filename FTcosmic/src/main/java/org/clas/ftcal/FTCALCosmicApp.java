@@ -9,9 +9,11 @@ import java.awt.Color;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import java.util.List;
+import org.clas.tools.CalibrationData;
 import org.clas.tools.CustomizeFit;
 import org.clas.tools.FTApplication;
 import org.clas.tools.FTDetector;
+import org.clas.tools.HipoFile;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.DetectorCounter;
 import org.root.attr.ColorPalette;
@@ -383,5 +385,20 @@ public class FTCALCosmicApp extends FTApplication {
             } 
         }
         return col;
+    }
+    
+    @Override
+    public void saveToFile(String hipoFileName) {
+        HipoFile histofile = new HipoFile(hipoFileName);
+        histofile.addToMap("histograms", H_COSMIC_CHARGE);
+        histofile.addToMap("fitfunctions", F_ChargeLandau);
+        histofile.writeHipoFile(hipoFileName);
+        //histofile.browsFile(hipofile);
+        
+        // Cosmic calibration //
+        CalibrationData calib = new CalibrationData();
+        DetectorCollection H_Calib_Charge = calib.getCollection(hipoFileName,"histograms");
+        DetectorCollection F_Calib_Landau = calib.getCollection(hipoFileName,"fitfunctions");
+
     }
 }

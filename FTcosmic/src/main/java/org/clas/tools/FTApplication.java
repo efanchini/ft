@@ -256,5 +256,9 @@ public class FTApplication implements ActionListener {
     public void setFitter(ExtendedFADCFitter efitter) {
         this.eFADCFitter = efitter;
     }
+    
+    public void saveToFile(String hipoFileName) {
+        
+    }
         
 }

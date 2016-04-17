@@ -36,6 +36,7 @@ import org.clas.tools.CalibrationData;
 import org.clas.tools.CustomizeFit;
 import org.clas.tools.ExtendedFADCFitter;
 import org.clas.tools.FTDataSet;
+import org.clas.tools.FitData;
 import org.clas.tools.Miscellaneous;
 import org.clas.tools.NoGridCanvas;
 
@@ -354,57 +355,26 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         this.view.repaint();
     }
     
-    private void saveToFile() {
-//        this.fc.setCurrentDirectory(new File("calibfiles"));
-//	int returnValue = fc.showSaveDialog(null);
-//        if (returnValue == JFileChooser.APPROVE_OPTION) {
-//            String outputFileName = fc.getSelectedFile().getAbsolutePath();
-//            System.out.println("Saving calibration results to: " + outputFileName);
-//            FitData cosmicFile = new FitData(mylandau,H_COSMIC_CHARGE);
-//            cosmicFile.writeToFile(outputFileName);
-//        }
+   private void saveToFile() {
         Miscellaneous extra = new Miscellaneous();
-        CalibrationData calib = new CalibrationData();
         
+        // TXT FILE //
         String outputFileName = extra.extractFileName("", "_Fit",".txt");
         this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             outputFileName = fc.getSelectedFile().getAbsolutePath();
             System.out.println("Saving calibration results to: " + outputFileName);
-//            FitData cosmicFile = new FitData(F_ChargeLandau,H_COSMIC_CHARGE);
+            // AAAAAAAAA: DA SOSTITUIRE con dati dalla tabella
+//            FitData cosmicFile = new FitData(mylandau,H_COSMIC_CHARGE);
 //            cosmicFile.writeToFile(outputFileName);
         }
-
-	    //      String CCDBoutFile = "./"+extra.datetime()+"_CCDB.txt";
-//        extra.CCDBcosmic(F_ChargeLandau, H_PED, CCDBoutFile);
-//        String outputname = extra.extractstring(outputFileName);
-
         
-        String CCDBoutFile = extra.extractFileName("", "_CCDB",".txt");
-        //extra.CCDBcosmic(mylandau, H_PED, CCDBoutFile); // Da reinserire //
-        
-      
-//        calib.addToMap("histograms", H_COSMIC_CHARGE);
-//        calib.addToMap("fitfunctions", F_ChargeLandau);
-        //calib.addToMap("other", H_COSMIC_CHARGE.get(0, 0, 269));
-        //calib.addToMap("other", H_COSMIC_CHARGE.get(0, 0, 268));
-        String hipofile = extra.extractFileName("", "",".hipo");
-        calib.fileWrite(hipofile);
-        //calib.ls(hipofile);
-        
-        calib.readCosmicCalibFile(hipofile);
-        DetectorCollection<H1D> H_calibration = calib.H_extracted;
-        DetectorCollection<F1D> F_calibration = calib.F_extracted;
-       
-        
-//        TGCanvas cc = new TGCanvas("","",600,600,2,1);
-//        cc.cd(0);
-//        cc.draw(H_COSMIC_CHARGE.get(0, 0, 269));
-//        cc.cd(1);
-//        cc.draw(H_calibration.get(0, 0, 269));
-        
-
+        // CCDB File //
+        // AAAAAAAAA: DA SOSTITUIRE con dati dalla tabella
+//        String CCDBoutFile = extra.extractFileName("Cosmic.txt", "_CCDB",".txt");
+//        extra.CCDBcosmic(mylandau, H_PED, CCDBoutFile); 
+        this.ftCosmic.saveToFile(extra.extractFileName("./test.txt", "",".hipo"));
     }
 
 
