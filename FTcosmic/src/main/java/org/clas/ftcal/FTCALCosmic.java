@@ -20,7 +20,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import org.clas.containers.FTHashTable;
 import org.clas.containers.FTHashTableViewer;
-import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
@@ -30,12 +29,7 @@ import org.jlab.clas12.detector.DetectorCounter;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCBasicFitter;
 import org.root.attr.ColorPalette;
-import org.root.func.F1D;
-import org.root.histogram.H1D;
-import org.clas.tools.CalibrationData;
-import org.clas.tools.CustomizeFit;
 import org.clas.tools.ExtendedFADCFitter;
-import org.clas.tools.FTDataSet;
 import org.clas.tools.FitData;
 import org.clas.tools.Miscellaneous;
 import org.clas.tools.NoGridCanvas;
@@ -335,6 +329,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 0, 0, key);
             summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 0, 0, key);  
             
+            
         }
     }
     
@@ -357,24 +352,24 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     
    private void saveToFile() {
         Miscellaneous extra = new Miscellaneous();
-        
+        FitData cosmicFile = new FitData();
+        this.ftCosmic.saveToFile(extra.extractFileName("./test.txt", "",".hipo"));
         // TXT FILE //
         String outputFileName = extra.extractFileName("", "_Fit",".txt");
         this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             outputFileName = fc.getSelectedFile().getAbsolutePath();
-            System.out.println("Saving calibration results to: " + outputFileName);
-            // AAAAAAAAA: DA SOSTITUIRE con dati dalla tabella
-//            FitData cosmicFile = new FitData(mylandau,H_COSMIC_CHARGE);
-//            cosmicFile.writeToFile(outputFileName);
+            updateTable();
+            outputFileName = extra.extractFileName(outputFileName, "_Fit",".txt");
+            cosmicFile.writeFile(outputFileName, summaryTable);
+            
         }
         
         // CCDB File //
-        // AAAAAAAAA: DA SOSTITUIRE con dati dalla tabella
-//        String CCDBoutFile = extra.extractFileName("Cosmic.txt", "_CCDB",".txt");
-//        extra.CCDBcosmic(mylandau, H_PED, CCDBoutFile); 
-        this.ftCosmic.saveToFile(extra.extractFileName("./test.txt", "",".hipo"));
+        String CCDBoutFile = extra.extractFileName("Cosmic.txt", "_CCDB",".txt");
+        cosmicFile.CCDBcosmic(CCDBoutFile, summaryTable);
+        
     }
 
 

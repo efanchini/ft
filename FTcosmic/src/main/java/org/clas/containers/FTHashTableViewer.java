@@ -19,8 +19,6 @@ import javax.swing.JTable;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
-import org.jlab.clas.detector.DetectorDescriptor;
-import org.jlab.clas.detector.IConstantsTableListener;
 
 /**
  *

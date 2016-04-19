@@ -8,9 +8,13 @@ package org.clas.tools;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
+import java.util.Hashtable;
+import java.util.Map;
+import org.clas.containers.FTHashGenerator;
 import org.jlab.clas.detector.DetectorCollection;
 import org.root.func.F1D;
 import org.root.histogram.H1D;
+import org.clas.containers.FTHashTable;
 
 /**
  *
@@ -18,54 +22,77 @@ import org.root.histogram.H1D;
  */
 public class FitData {
 
-        private DetectorCollection<F1D> myfct;
-        private DetectorCollection<H1D> histo;
-        private String fileName;
+     
+    public FitData(){}
+
     
-    public FitData(DetectorCollection<F1D> fFunctions, DetectorCollection<H1D> fHisto) {
-        this.myfct = fFunctions;
-        this.histo = fHisto;
-    }
-        
-        
-    public void writeToFile(String fFile) { 
-        this.fileName = fFile;
+    public void writeFile(String filename, FTHashTable hashtable){
+       
+        // Create File form the HashTable SummaryTable //
+        FTHashTable table = hashtable;
         // Format //
-        // component Pi ErPi(i from 0 to 3) Chi2 NDF N.Entries MyChi2//
-        int ip=3; // N. of parameters that we want to have //
-        DecimalFormat format = new DecimalFormat("0.00");
+        // Sector Layer Component Pedestal Noise N. Events E Sigma(E)  Chi^2  T  Sigma(T) // 
         try {
             PrintWriter fout;
-            fout = new PrintWriter(this.fileName);
-            fout.printf("Component \t Par_i \t Err_Par_i \t Chi2(java) \t NDF \t histo_Entries \n");
-            for(int key : histo.getComponents(0, 0)){
-                if(myfct.hasEntry(0, 0, key)){
-                    fout.print(key+"\t");
-                    //System.out.print(key+"\t");
-                    for(int i=0; i<ip; i++){
-                        fout.printf("%.3f \t %.3f \t",myfct.get(0,0,key).getParameter(i),myfct.get(0,0,key).parameter(i).error());
-                        //System.out.printf("%.3f \t %.3f \t",myfct.get(0,0,key).getParameter(i),myfct.get(0,0,key).parameter(i).error());
-                    }    
-                    fout.print(format.format(myfct.get(0, 0, key).getChiSquare(histo.get(0,0,key),"NR"))+"\t"+myfct.get(0, 0, key).getNDF(histo.get(0,0,key).getDataSet())
-                                    +"\t"+histo.get(0,0,key).getEntries()+"\n");
-                   // System.out.print(format.format(myfct.get(0, 0, key).getChiSquare(histo.get(0,0,key),"NR"))+"\t"+myfct.get(0, 0, key).getNDF(histo.get(0,0,key).getDataSet())
-                   //                 +"\t"+histo.get(0,0,key).getEntries()+"\n");
-                }
-                else {
-                    for(int i=0; i<ip; i++){
-                        fout.printf("0.000 \t 0.000 \t");
-                        //System.out.printf("0.000 \t 0.000 \t");
+            fout = new PrintWriter(filename);
+            String col="";
+            for(int r=0; r<table.getRowCount(); r++){
+                if(r==0){
+                    for(int c=0; c<table.getColumnCount(); c++){
+                        col=table.getColumnName(c);
+                        fout.printf(col+"\t");
                     }
-                     fout.print("0.000 \t 0.000 \t"+histo.get(0,0,key).getEntries()+"\n");
-                    //System.out.print("0.000 \t 0.000 \t"+histo.get(0,0,key).getEntries()+"\n");
+                        fout.println();
                 }
-            }
+                for(int c=0; c<table.getColumnCount(); c++){
+                    fout.printf(table.getValueAt(r, c)+"\t");
+                    }
+                fout.printf("\n");
+                }
             fout.close();
-            System.out.println("Fit results written to file: "+fileName);
+            System.out.println("FitData => File from HashTable: "+filename);
+        }
+        catch(FileNotFoundException ex){}
+    }
+    
+    
+    
+        public void CCDBcosmic(String filename, FTHashTable table) {     
+        // File Format //
+        // Sector Layer Component Pedestal Noise Energy Sigma  Preamp-Gain  Photosensor-Gain //
+        int preampG =600;// Preamp-Gain
+        int pmtG =150;// Photosensor-Gain
+
+        try {
+            PrintWriter fout;
+            fout = new PrintWriter(filename);
+            String col="";
+            //fout.printf("Sector \t Layer \t Component \t  Pedestal \t Noise \t <E> \t \u03C3(E) \t Preamp-Gain \t Photosensor-Gain");
+            for(int r=0; r<table.getRowCount(); r++){
+                if(r==0){
+                    for(int c=0; c<table.getColumnCount(); c++){
+                        col=table.getColumnName(c);
+                        if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
+                       || col.equals("<E>") || col.equals("\u03C3(E)")) fout.printf(col+"\t");
+                    }
+                    fout.printf("Preamp-Gain \t Photosensor-Gain \n");
+                }
+                for(int c=0; c<table.getColumnCount(); c++){
+                    col=table.getColumnName(c);
+                    if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
+                       || col.equals("<E>") || col.equals("\u03C3(E)")){
+                        fout.printf(table.getValueAt(r, c)+"\t");
+                    }
+                }
+                fout.printf(preampG+"\t"+ pmtG +"\n");
+                }
+            fout.close();
+            System.out.println("FitData => CCDB file written: "+filename);
         } catch (FileNotFoundException ex) {
          
         }
-    }
-    
+    }  
+        
+        
     
 }
