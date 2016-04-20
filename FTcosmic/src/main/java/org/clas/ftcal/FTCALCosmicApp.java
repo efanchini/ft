@@ -126,22 +126,22 @@ public class FTCALCosmicApp extends FTApplication {
         mlMin=1.0;
         if(hcosmic.getBinContent(0)==0) F_ChargeLandau.add(0, 0, key, new F1D("landau",     mlMin, mlMax));
         else                            F_ChargeLandau.add(0, 0, key, new F1D("landau+exp", mlMin, mlMax));
-        if(hcosmic.getBinContent(0)<10) {
+        if(hcosmic.getBinContent(0)<20) {//Changed from 10
             F_ChargeLandau.get(0, 0, key).setParameter(0, hcosmic.getBinContent(hcosmic.getMaximumBin()));
         }
         else {
-            F_ChargeLandau.get(0, 0, key).setParameter(0, 10);
+            F_ChargeLandau.get(0, 0, key).setParameter(0, 20);//Changed from 10
         }
         F_ChargeLandau.get(0, 0, key).setParLimits(0, 0.0, 10000000.); 
         F_ChargeLandau.get(0, 0, key).setParameter(1,hcosmic.getMean());
-        F_ChargeLandau.get(0, 0, key).setParLimits(1, 5.0, 30.);        
-        F_ChargeLandau.get(0, 0, key).setParameter(2,2);
-        F_ChargeLandau.get(0, 0, key).setParLimits(2, 0.5, 10);
+        F_ChargeLandau.get(0, 0, key).setParLimits(1, 4.0, 30.);//Changed from 5-30        
+        F_ChargeLandau.get(0, 0, key).setParameter(2,1.6);//Changed from 2
+        F_ChargeLandau.get(0, 0, key).setParLimits(2, 0.3, 5);//Changed from 0.5-10
         if(hcosmic.getBinContent(0)!=0) {
             F_ChargeLandau.get(0, 0, key).setParameter(3,hcosmic.getBinContent(0));
             F_ChargeLandau.get(0, 0, key).setParLimits(3,  0.0, 10000000.); 
-            F_ChargeLandau.get(0, 0, key).setParameter(4, -0.2);
-            F_ChargeLandau.get(0, 0, key).setParLimits(4, -10, 0.); 
+            F_ChargeLandau.get(0, 0, key).setParameter(4, -0.3);//Changed from -0.2
+            F_ChargeLandau.get(0, 0, key).setParLimits(4, -3, 0.0); //Changed from -10-0
         }
     }
     
@@ -209,6 +209,8 @@ public class FTCALCosmicApp extends FTApplication {
             cfit.FitPanel(H_COSMIC_CHARGE.get(0,0,key), F_ChargeLandau.get(0,0,key),"LQ");
             this.getCanvas("Energy").update();
             this.updateChargeFitResults(key);
+            //System.out.println("ERICA: H: "+H_COSMIC_CHARGE.get(0, 0, key).getName()+"  F: "+F_ChargeLandau.get(0,0,key).getName());
+            
         }
         else if(this.getCanvasSelect() == "Time") {
             cfit.FitPanel(H_COSMIC_THALF.get(0,0,key), F_TimeGauss.get(0,0,key),"NQ");

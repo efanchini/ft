@@ -353,18 +353,22 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
    private void saveToFile() {
         Miscellaneous extra = new Miscellaneous();
         FitData cosmicFile = new FitData();
-        this.ftCosmic.saveToFile(extra.extractFileName("./test.txt", "",".hipo"));
+        
         // TXT FILE //
         String outputFileName = extra.extractFileName("", "_Fit",".txt");
+        String buttonFileName = "";
         this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            outputFileName = fc.getSelectedFile().getAbsolutePath();
+            buttonFileName = fc.getSelectedFile().getAbsolutePath();
             updateTable();
-            outputFileName = extra.extractFileName(outputFileName, "_Fit",".txt");
+            outputFileName = extra.extractFileName(buttonFileName, "_Fit",".txt");
             cosmicFile.writeFile(outputFileName, summaryTable);
             
         }
+        String hipoFileName = extra.extractFileName("./test.txt", "",".hipo");
+        if(buttonFileName!="")hipoFileName = extra.extractFileName(buttonFileName, "",".hipo");
+        this.ftCosmic.saveToFile(hipoFileName);
         
         // CCDB File //
         String CCDBoutFile = extra.extractFileName("Cosmic.txt", "_CCDB",".txt");

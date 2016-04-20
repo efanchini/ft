@@ -45,7 +45,9 @@ public class CustomizeFit {
         this.pars.clear();
         this.err_pars.clear();
         int npar = f.getNParams();
-
+        String f_name ="new_"+f.getName(); 
+        this.newfct.setName(f_name);
+        
         CustomPanel panel = new CustomPanel();
 
         int result = JOptionPane.showConfirmDialog(null, panel, 
@@ -64,13 +66,12 @@ public class CustomizeFit {
             else this.range[0] = f.getMin();
             if(!panel.maxRange.getText().isEmpty())this.range[1] = Double.parseDouble(panel.maxRange.getText());
             else this.range[1] = f.getMax();
-
+            
             refit(opt); 
         }       
     }
 
     public void refit(String opt){
-        this.newfct.setName("New fct");
         for(int i=0; i<this.pars.size(); i++){
             this.newfct.setParameter(i, this.pars.get(i));
         }
@@ -80,7 +81,7 @@ public class CustomizeFit {
             this.err_pars.add(this.newfct.parameter(i).error());
         }
         this.newfct.setLineColor(3);
-            
+        
     }
     
     public String draw(){
@@ -128,5 +129,8 @@ public class CustomizeFit {
 
 
     
+    public F1D updateFunction(){
+        return this.newfct;
+    }
     
 }

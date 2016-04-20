@@ -149,7 +149,6 @@ public class CanvasBook extends JPanel implements ActionListener {
     public void findelement(){
         int first=0;
         this.elements=1;
-        System.out.println("AAA: "+this.elements+"  "+this.currentPosition+"  ");
         for(int i=this.currentPosition; i<this.container.size(); i++){
             if(this.options.get(i).contains("same") && first<=1){
                this.elements++;
@@ -157,7 +156,6 @@ public class CanvasBook extends JPanel implements ActionListener {
             else if(this.options.get(i).contains("same")==false)first++;
             else break;
         }        
-        System.out.println("AAA: "+this.elements+"  "+this.currentPosition+"  ");
     }
     
     public void reset(){
