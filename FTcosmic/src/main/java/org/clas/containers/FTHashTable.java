@@ -5,8 +5,6 @@
  */
 package org.clas.containers;
 
-import java.awt.Color;
-import java.awt.Component;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -19,7 +17,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -28,11 +25,11 @@ import javax.swing.table.DefaultTableModel;
  */
 public class FTHashTable extends DefaultTableModel {
     
-    private FTHashCollection<FTTableRow>  hashCollection = null;
-    private List<String>              columns        = new ArrayList<String>();
-    private List<String>              types          = new ArrayList<String>();
-    private Map<Integer,HashTableRowConstrain>  constrains = new TreeMap<Integer,HashTableRowConstrain>();              
-    private String                              htName     = "HashTable";
+    private FTHashCollection<FTTableRow>        hashCollection = null;
+    private List<String>                        columns        = new ArrayList<String>();
+    private List<String>                        types          = new ArrayList<String>();
+    private Map<Integer,HashTableRowConstrain>  constrains     = new TreeMap<Integer,HashTableRowConstrain>();              
+    private String                              htName         = "HashTable";
      
     
     public FTHashTable(){

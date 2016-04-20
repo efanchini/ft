@@ -96,13 +96,13 @@ public class CanvasBook extends JPanel implements ActionListener {
         int counter = 0, npp=1;
         findelement();
         if(back){
-            this.currentPosition-=(2*elements*npads);
+            this.currentPosition-=(2*this.elements*npads);            
             if(this.currentPosition>=this.container.size() ){
-                this.currentPosition = this.container.size()-(2*elements*npads);
+                this.currentPosition = this.container.size()-(2*this.elements*npads);
             }      
             else if (this.currentPosition<=0){ 
                 if(this.currentPosition<=-1*npads){
-                    this.currentPosition= this.container.size()-(2*elements*npads);
+                    this.currentPosition= this.container.size()-(1*this.elements*npads);
                 }
                 else{     
                 this.currentPosition = 0;
@@ -115,7 +115,7 @@ public class CanvasBook extends JPanel implements ActionListener {
             this.currentPosition = 0;
             findelement();
             }
-        }
+           }
        
          
         canvas.divide(this.nDivisionsX,this.nDivisionsY);
@@ -137,7 +137,7 @@ public class CanvasBook extends JPanel implements ActionListener {
                 canvas.draw(ds, "op+same");
             }
             
-            if(npp==elements){
+            if(npp==this.elements){
                 counter++;
                 npp=0;
             }
@@ -148,10 +148,10 @@ public class CanvasBook extends JPanel implements ActionListener {
    
     public void findelement(){
         int first=0;
-        elements=1;
+        this.elements=1;
         for(int i=this.currentPosition; i<this.container.size(); i++){
             if(this.options.get(i).contains("same") && first<=1){
-               elements++;
+               this.elements++;
             }
             else if(this.options.get(i).contains("same")==false)first++;
             else break;
@@ -163,8 +163,8 @@ public class CanvasBook extends JPanel implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-//        System.out.println("action " + e.getActionCommand());
         if(e.getActionCommand().compareTo("Next >")==0){
+            this.backward = false;
             this.drawNextBack(backward);
         }
         
