@@ -34,6 +34,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     
         
     DetectorEventProcessorPane evPane = new DetectorEventProcessorPane();
+    
    
    
     EventDecoder decoder = new EventDecoder();
@@ -72,7 +73,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
         // filling main panel with tabs for different FT subdetectors and event handling panel
         this.detectorPanel.add(this.FTCALPanel, BorderLayout.CENTER);
         this.detectorPanel.add(this.evPane, BorderLayout.PAGE_END);
-        
+       
         
     }
 
@@ -86,6 +87,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
 
     private void initRawDataDecoder() {
         moduleFTCAL.initDecoder();
+  
     }
 
     private void initHistograms() {
@@ -107,8 +109,8 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
         decoder.decode(event);
         nProcessed++;
         
-        moduleFTCAL.processDecodedEvent();        
-
+        moduleFTCAL.processDecodedEvent();  
+        
     }
 
         

@@ -20,15 +20,20 @@ import org.root.histogram.H2D;
  * @author fanchini
  */
 public class CalibrationData {
-
-    public DetectorCollection getCollection(String filename, String dirname){
+    HipoFile hipofile;
+    
+    public void getFile(String filename){
+        HipoFile file = new HipoFile(filename);
+        this.hipofile = file;
+    }
+    
+    public DetectorCollection getCollection(String dirname){
     // The object name must contain the crystal number.                  //
     // It is used to establish the detector collection key of the object //
     // At the moment are ####_id  and the key is key=id                  //
     DetectorCollection DC = new DetectorCollection();
-    HipoFile hipofile = new HipoFile(filename);
     int j=0; int key=0;
-    ArrayList arrayl = hipofile.getArrayList(dirname);
+    ArrayList arrayl = this.hipofile.getArrayList(dirname);
     for (Object obj : arrayl) {
         String obj_label = getObjlabel(obj);
         if(!extractstring(obj_label).isEmpty()) key = parseInt(extractstring(obj_label));

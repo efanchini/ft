@@ -45,8 +45,8 @@ public class CustomizeFit {
         this.pars.clear();
         this.err_pars.clear();
         int npar = f.getNParams();
-        String f_name ="new_"+f.getName(); 
-        this.newfct.setName(f_name);
+        String f_name = f.getName(); 
+        this.newfct.setName("New_"+f_name);
         
         CustomPanel panel = new CustomPanel();
 
@@ -129,8 +129,5 @@ public class CustomizeFit {
 
 
     
-    public F1D updateFunction(){
-        return this.newfct;
-    }
     
 }
