@@ -47,8 +47,8 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
     }
 
     private void initCollections() {
-        H_PED   = this.getData().addCollection(new H1D("Pedestal", 400, 100., 300.0),"Pedestal (fADC counts)","Counts",2);
-        H_NOISE = this.getData().addCollection(new H1D("Noise", 200, 0.0, 10.0),"RMS (mV)","Counts",4); 
+        H_PED   = this.getData().addCollection(new H1D("Pedestal", 400, 100., 300.0),"Pedestal (fADC counts)","Counts",2,"H_PED");
+        H_NOISE = this.getData().addCollection(new H1D("Noise", 200, 0.0, 10.0),"RMS (mV)","Counts",4,"H_NOISE"); 
         pedestalMEAN    = new double[this.getDetector().getNComponents()];
         pedestalRMS     = new double[this.getDetector().getNComponents()];
         noiseRMS        = new double[this.getDetector().getNComponents()];

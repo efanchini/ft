@@ -37,7 +37,7 @@ public class FTCALEventApp extends FTApplication {
     }
 
     private void initCollections() {
-        H_WAVE   = this.getData().addCollection(new H1D("Wave", 100, 0.0, 100.0),"fADC Sample","fADC Counts",5);
+        H_WAVE   = this.getData().addCollection(new H1D("Wave", 100, 0.0, 100.0),"fADC Sample","fADC Counts",5,"H_WAVE");
         H_WMAX   = new H1D("WMAX", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_TCROSS = new H1D("TCROSS", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
     }

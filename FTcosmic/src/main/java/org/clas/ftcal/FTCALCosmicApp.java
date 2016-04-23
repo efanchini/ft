@@ -7,9 +7,7 @@ package org.clas.ftcal;
 
 import java.awt.Color;
 import static java.lang.Math.max;
-import static java.lang.Math.min;
 import java.util.List;
-import org.clas.tools.CalibrationData;
 import org.clas.tools.CustomizeFit;
 import org.clas.tools.FTApplication;
 import org.clas.tools.FTDetector;
@@ -76,15 +74,16 @@ public class FTCALCosmicApp extends FTApplication {
         this.initCollections();
     }
 
+   
     private void initCollections() {
-        H_fADC          = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0));
-        H_COSMIC_fADC   = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0),"fADC Sample","fADC Counts",3);
-        H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 80, 0.0, 40.0),"Charge (pC)","Counts",2);
-        H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax", 80, 0.0, 40.0), "Amplitude (mV)", "Counts", 2);
-        H_COSMIC_TCROSS = this.getData().addCollection(new H1D("T_TRIG", 80, -20.0, 60.0), "Time (ns)", "Counts", 5);
-        H_COSMIC_THALF  = this.getData().addCollection(new H1D("T_HALF", 80, -20.0, 60.0), "Time (ns)", "Counts", 5);
-        F_ChargeLandau  = this.getData().addCollection(new F1D("landau",    0.0, 40.0),"Landau");
-        F_TimeGauss     = this.getData().addCollection(new F1D("gaus", -20.0, 60.0),"Time");
+        H_fADC          = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0),"H_fADC");
+        H_COSMIC_fADC   = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0),"fADC Sample","fADC Counts",3,"H_COSMIC_fADC");
+        H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 80, 0.0, 40.0),"Charge (pC)","Counts",2,"H_COSMIC_CHARGE");
+        H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax",   80, 0.0, 40.0), "Amplitude (mV)", "Counts", 2,"H_COSMIC_VMAX");
+        H_COSMIC_TCROSS = this.getData().addCollection(new H1D("T_TRIG", 80, -20.0, 60.0), "Time (ns)", "Counts", 5, "H_COSMIC_TCROSS");
+        H_COSMIC_THALF  = this.getData().addCollection(new H1D("T_HALF", 80, -20.0, 60.0), "Time (ns)", "Counts", 5,"H_COSMIC_THALF");
+        F_ChargeLandau  = this.getData().addCollection(new F1D("landau", 0.0, 40.0),"Landau","F_ChargeLandau");
+        F_TimeGauss     = this.getData().addCollection(new F1D("gaus", -20.0, 60.0),"Time","F_ChargeLandau");
         H_fADC_N       = new H1D("fADC"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_COSMIC_N     = new H1D("EVENT" , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_COSMIC_MEAN  = new H1D("MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
@@ -98,6 +97,7 @@ public class FTCALCosmicApp extends FTApplication {
         for(int i=0; i< this.getDetector().getNComponents(); i++) {
             detectorIDs[i]=this.getDetector().getIDArray()[i]; 
         }
+        
     }
 
     @Override
@@ -124,8 +124,18 @@ public class FTCALCosmicApp extends FTApplication {
         double mlMin=hcosmic.getAxis().min();
         double mlMax=hcosmic.getAxis().max();
         mlMin=1.0;
-        if(hcosmic.getBinContent(0)==0) F_ChargeLandau.add(0, 0, key, new F1D("landau",     mlMin, mlMax));
-        else                            F_ChargeLandau.add(0, 0, key, new F1D("landau+exp", mlMin, mlMax));
+        F1D ff;
+        if(hcosmic.getBinContent(0)==0){
+            ff = new F1D("landau",     mlMin, mlMax);
+            ff.setName("Landau_"+key);
+            F_ChargeLandau.add(0, 0, key, ff);
+        }
+        else{
+            ff = new F1D("landau+exp", mlMin, mlMax);
+            ff.setName("Landau_"+key);
+            F_ChargeLandau.add(0, 0, key, ff);
+        }
+          
         if(hcosmic.getBinContent(0)<20) {//Changed from 10
             F_ChargeLandau.get(0, 0, key).setParameter(0, hcosmic.getBinContent(hcosmic.getMaximumBin()));
         }
@@ -143,22 +153,26 @@ public class FTCALCosmicApp extends FTApplication {
             F_ChargeLandau.get(0, 0, key).setParameter(4, -0.3);//Changed from -0.2
             F_ChargeLandau.get(0, 0, key).setParLimits(4, -3, 0.0); //Changed from -10-0
         }
+        
     }
     
     private void fitLandau(int key) {
         H1D hcosmic = H_COSMIC_CHARGE.get(0,0,key);
-        initLandauFitPar(key);
+        String name = F_ChargeLandau.get(0, 0, key).getName();
+        if(name.indexOf("New_")==-1)initLandauFitPar(key);
         hcosmic.fit(F_ChargeLandau.get(0, 0, key),"LQ");
         this.updateChargeFitResults(key);
     }
+    
 
     private void initTimeGaussFitPar(int key, H1D htime) {
         double hAmp  = htime.getBinContent(htime.getMaximumBin());
         double hMean = htime.getAxis().getBinCenter(htime.getMaximumBin());
         double hRMS  = htime.getRMS();        
         double rangeMin = hMean - 3*hRMS; 
-        double rangeMax = hMean + 3*hRMS;         
+        double rangeMax = hMean + 3*hRMS;     
         F_TimeGauss.add(0, 0, key, new F1D("gaus", rangeMin, rangeMax));
+        F_TimeGauss.get(0, 0, key).setName("Gaus_"+key);
         F_TimeGauss.get(0, 0, key).setParameter(0, hAmp);
         F_TimeGauss.get(0, 0, key).setParLimits(0, hAmp*0.8, hAmp*1.2);
         F_TimeGauss.get(0, 0, key).setParameter(1, hMean);       
@@ -168,8 +182,8 @@ public class FTCALCosmicApp extends FTApplication {
 
     private void fitTime(int key) {
         H1D htime = H_COSMIC_THALF.get(0,0,key);
-        
-        initTimeGaussFitPar(key,htime);
+        String name =F_TimeGauss.get(0, 0, key).getName();
+        if(name.indexOf("New_")==-1)initTimeGaussFitPar(key,htime);
         htime.fit(F_TimeGauss.get(0, 0, key),"NQ");
         this.updateTimeFitResults(key);
     }
@@ -189,8 +203,21 @@ public class FTCALCosmicApp extends FTApplication {
         }
         if(     this.getCanvasSelect() == "Energy") this.fitBook(H_COSMIC_CHARGE,F_ChargeLandau);
         else if(this.getCanvasSelect() == "Time")   this.fitBook(H_COSMIC_THALF,F_TimeGauss);
+        
     }
     
+     public void fitFastCollections() {
+        for(int key : H_COSMIC_CHARGE.getComponents(0, 0)) {
+            if(H_COSMIC_CHARGE.get(0, 0, key).getEntries()>0 && F_ChargeLandau.get(0, 0, key).getName()=="f1") {
+                this.fitLandau(key);
+            }
+            if(H_COSMIC_THALF.get(0,0,key).getEntries()>0 && F_TimeGauss.get(0, 0, key).getName()=="f1") {   
+                this.fitTime(key);
+            }   
+        }
+        
+    }
+      
     private void updateChargeFitResults(int key){
         H_COSMIC_MEAN.setBinContent(key, F_ChargeLandau.get(0, 0, key).getParameter(1));
         H_COSMIC_SIGMA.setBinContent(key, F_ChargeLandau.get(0, 0, key).getParameter(2));
@@ -209,7 +236,6 @@ public class FTCALCosmicApp extends FTApplication {
             cfit.FitPanel(H_COSMIC_CHARGE.get(0,0,key), F_ChargeLandau.get(0,0,key),"LQ");
             this.getCanvas("Energy").update();
             this.updateChargeFitResults(key);
-            //System.out.println("ERICA: H: "+H_COSMIC_CHARGE.get(0, 0, key).getName()+"  F: "+F_ChargeLandau.get(0,0,key).getName());
             
         }
         else if(this.getCanvasSelect() == "Time") {
@@ -392,15 +418,13 @@ public class FTCALCosmicApp extends FTApplication {
     @Override
     public void saveToFile(String hipoFileName) {
         HipoFile histofile = new HipoFile(hipoFileName);
-        histofile.addToMap("histograms", H_COSMIC_CHARGE);
-        histofile.addToMap("fitfunctions", F_ChargeLandau);
+        histofile.addToMap("Energy_histo", this.H_COSMIC_CHARGE);
+        histofile.addToMap("Energy_fct", this.F_ChargeLandau);
+        histofile.addToMap("Noise_histo", this.H_COSMIC_THALF);
+        histofile.addToMap("Noise_fct", this.F_TimeGauss);
         histofile.writeHipoFile(hipoFileName);
-        //histofile.browsFile(hipofile);
+        //histofile.browsFile(hipoFileName);
         
-        // Cosmic calibration //
-        CalibrationData calib = new CalibrationData();
-        DetectorCollection H_Calib_Charge = calib.getCollection(hipoFileName,"histograms");
-        DetectorCollection F_Calib_Landau = calib.getCollection(hipoFileName,"fitfunctions");
-
+        
     }
 }
