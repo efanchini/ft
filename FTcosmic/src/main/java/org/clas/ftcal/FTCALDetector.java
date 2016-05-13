@@ -10,7 +10,6 @@ import org.clas.tools.FTDetector;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
-import org.jlab.clas12.calib.DetectorShapeView2D;
 
 /**
  *

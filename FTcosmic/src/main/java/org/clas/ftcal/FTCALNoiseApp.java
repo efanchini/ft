@@ -8,9 +8,9 @@ package org.clas.ftcal;
 import java.awt.Color;
 import java.awt.event.ActionListener;
 import java.util.List;
-import org.clas.tools.ExtendedFADCFitter;
 import org.clas.tools.FTApplication;
 import org.clas.tools.FTDetector;
+import org.clas.tools.HipoFile;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.DetectorCounter;
 import org.root.histogram.GraphErrors;
@@ -71,7 +71,13 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
             if(H_PED.hasEntry(0, 0, key)) {
-                this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
+//                //for run609 //
+//                if(key==9 || key==10 || key==31 || key==32 ||key==53 ||key==54 ||key==75 ||key==76 ||key==97 ||key==98 ||
+//                    key==118 ||  key==119 || key==120 ||  key==140 ||key==141){
+//                    this.getFitter().fitException(counter.getChannels().get(0), 4, 24, 60, 120);
+//                }
+//                else this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
+                this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key)); //normale
                 H_PED.get(0,0,key).fill(this.getFitter().getPedestal());
                 H_NOISE.get(0, 0, key).fill(this.getFitter().getRMS());
             }
@@ -112,6 +118,11 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
             this.getCanvas(0).cd(3);
             this.getCanvas(0).draw(hnoise,"S");
         }
+    }
+    
+    public void saveToFile(HipoFile histofile) {
+        histofile.addToMap("Noise_histo",    this.H_NOISE);
+        histofile.addToMap("Pedestal_histo", this.H_PED);
     }
         
     @Override

@@ -123,7 +123,7 @@ public class FTCALCosmicApp extends FTApplication {
         H1D hcosmic = H_COSMIC_CHARGE.get(0,0,key);
         double mlMin=hcosmic.getAxis().min();
         double mlMax=hcosmic.getAxis().max();
-        mlMin=1.0;
+        mlMin=2.0;
         F1D ff;
         if(hcosmic.getBinContent(0)==0){
             ff = new F1D("landau",     mlMin, mlMax);
@@ -142,7 +142,7 @@ public class FTCALCosmicApp extends FTApplication {
         else {
             F_ChargeLandau.get(0, 0, key).setParameter(0, 20);//Changed from 10
         }
-        F_ChargeLandau.get(0, 0, key).setParLimits(0, 0.0, 10000000.); 
+        F_ChargeLandau.get(0, 0, key).setParLimits(0, 0.0, 10000000.0); 
         F_ChargeLandau.get(0, 0, key).setParameter(1,hcosmic.getMean());
         F_ChargeLandau.get(0, 0, key).setParLimits(1, 4.0, 30.);//Changed from 5-30        
         F_ChargeLandau.get(0, 0, key).setParameter(2,1.6);//Changed from 2
@@ -162,6 +162,7 @@ public class FTCALCosmicApp extends FTApplication {
         if(name.indexOf("New_")==-1)initLandauFitPar(key);
         hcosmic.fit(F_ChargeLandau.get(0, 0, key),"LQ");
         this.updateChargeFitResults(key);
+        
     }
     
 
@@ -169,14 +170,14 @@ public class FTCALCosmicApp extends FTApplication {
         double hAmp  = htime.getBinContent(htime.getMaximumBin());
         double hMean = htime.getAxis().getBinCenter(htime.getMaximumBin());
         double hRMS  = htime.getRMS();        
-        double rangeMin = hMean - 3*hRMS; 
-        double rangeMax = hMean + 3*hRMS;     
+        double rangeMin = (hMean - 2.5*hRMS) -1; 
+        double rangeMax = (hMean + 2.5*hRMS) +1;     
         F_TimeGauss.add(0, 0, key, new F1D("gaus", rangeMin, rangeMax));
         F_TimeGauss.get(0, 0, key).setName("Gaus_"+key);
         F_TimeGauss.get(0, 0, key).setParameter(0, hAmp);
         F_TimeGauss.get(0, 0, key).setParLimits(0, hAmp*0.8, hAmp*1.2);
         F_TimeGauss.get(0, 0, key).setParameter(1, hMean);       
-        F_TimeGauss.get(0, 0, key).setParameter(2, 2.);
+        F_TimeGauss.get(0, 0, key).setParameter(2, 2.5);
         F_TimeGauss.get(0, 0, key).setParLimits(2, 0.2, 10);
     }    
 
@@ -192,18 +193,16 @@ public class FTCALCosmicApp extends FTApplication {
     public void fitCollections() {
         for(int key : H_COSMIC_CHARGE.getComponents(0, 0)) {
             if(H_COSMIC_CHARGE.get(0, 0, key).getEntries()>100) {
-                //System.out.println("Fitting charge histos for component: " + key);
                 this.fitLandau(key);
             }
             //else System.out.println("Skipping charge fit of component: " + key + 
             //                        ", only " + H_COSMIC_CHARGE.get(0, 0, key).getEntries() + " events");
-            if(H_COSMIC_THALF.get(0,0,key).getEntries()>0) {        
+            if(H_COSMIC_THALF.get(0,0,key).getEntries()>0) {    
                 this.fitTime(key);
-            }   
-        }
+            } 
+        }     
         if(     this.getCanvasSelect() == "Energy") this.fitBook(H_COSMIC_CHARGE,F_ChargeLandau);
         else if(this.getCanvasSelect() == "Time")   this.fitBook(H_COSMIC_THALF,F_TimeGauss);
-        
     }
     
      public void fitFastCollections() {
@@ -215,7 +214,6 @@ public class FTCALCosmicApp extends FTApplication {
                 this.fitTime(key);
             }   
         }
-        
     }
       
     private void updateChargeFitResults(int key){
@@ -267,6 +265,7 @@ public class FTCALCosmicApp extends FTApplication {
                 }    
             }
         }
+        
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
             if(this.getDetector().hasComponent(key)) {
@@ -289,6 +288,7 @@ public class FTCALCosmicApp extends FTApplication {
                         H_COSMIC_fADC.get(0, 0, key).fill(i, pulse[i]-this.getFitter().getPedestal() + 10.0);                
                     }
                     double charge=(counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50);
+                    
                     H_COSMIC_CHARGE.get(0, 0, key).fill(charge);
                     H_COSMIC_VMAX.get(0, 0, key).fill((this.getFitter().getWave_Max()-this.getFitter().getPedestal())*LSB);
                     H_COSMIC_TCROSS.get(0, 0, key).fill(this.getFitter().getTime(3)-tPMTCross);
@@ -412,19 +412,14 @@ public class FTCALCosmicApp extends FTApplication {
                 }
             } 
         }
+        
         return col;
     }
     
-    @Override
-    public void saveToFile(String hipoFileName) {
-        HipoFile histofile = new HipoFile(hipoFileName);
+    public void saveToFile(HipoFile histofile) {
         histofile.addToMap("Energy_histo", this.H_COSMIC_CHARGE);
         histofile.addToMap("Energy_fct", this.F_ChargeLandau);
-        histofile.addToMap("Noise_histo", this.H_COSMIC_THALF);
-        histofile.addToMap("Noise_fct", this.F_TimeGauss);
-        histofile.writeHipoFile(hipoFileName);
-        //histofile.browsFile(hipoFileName);
-        
-        
+        histofile.addToMap("Time_histo", this.H_COSMIC_THALF);
+        histofile.addToMap("Time_fct", this.F_TimeGauss);
     }
 }

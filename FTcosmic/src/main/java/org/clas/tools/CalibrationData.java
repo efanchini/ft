@@ -7,10 +7,8 @@ package org.clas.tools;
 
 import static java.lang.Integer.parseInt;
 import java.util.ArrayList;
-import java.util.TreeMap;
 import org.jlab.clas.detector.DetectorCollection;
 import org.root.func.F1D;
-import org.root.group.TDirectory;
 import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;

@@ -5,8 +5,8 @@
  */
 package org.clas.ftcal;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import javax.swing.JFileChooser;
 import org.clas.tools.FTApplication;
 import org.clas.tools.FTDetector;
 import org.jlab.clas.detector.DetectorCollection;
@@ -14,7 +14,7 @@ import org.root.func.F1D;
 import org.root.histogram.H1D;
 import org.clas.tools.CalibrationData;
 import org.clas.ftcal.FTCALCosmic;
-import org.jlab.clas12.detector.DetectorCounter;
+import org.clas.tools.Miscellaneous;
 
 /**
  *
@@ -32,7 +32,7 @@ public class FTCALCompareApp extends FTApplication{
     DetectorCollection<F1D> F_Time     = new DetectorCollection<F1D>();
     
     DetectorCollection<H1D> H_REF_CHARGE    = new DetectorCollection<H1D>();
-    DetectorCollection<H1D> H_REF_TIME     = new DetectorCollection<H1D>();
+    DetectorCollection<H1D> H_REF_TIME      = new DetectorCollection<H1D>();
     DetectorCollection<F1D> F_Ref_Charge    = new DetectorCollection<F1D>();
     DetectorCollection<F1D> F_Ref_Time      = new DetectorCollection<F1D>();
     
@@ -45,6 +45,7 @@ public class FTCALCompareApp extends FTApplication{
     H1D hRefCharge         = null;
     H1D hRefTime           = null;
     
+     Miscellaneous extra = new Miscellaneous();
     
     
     
@@ -54,12 +55,12 @@ public class FTCALCompareApp extends FTApplication{
         this.addCanvas("Comparison");
         this.getCanvas("Comparison").divideCanvas(2, 2);
         this.addFields("Occupancy", "<E>", "\u03C3(E)", "\u03C7\u00B2(E)", "<T>", "\u03C3(T)");
-        this.getParameter(0).setRanges(0.,1000000.,1.,1000000.);
-        this.getParameter(1).setRanges(5.,25.,10.,50.);
-        this.getParameter(2).setRanges(0.,10.,10.,10.);
-        this.getParameter(3).setRanges(0.,2.,10.,5.);
-        this.getParameter(4).setRanges(0.,50.,10.,50.);
-        this.getParameter(5).setRanges(0.,5.,10.,5.);
+//        this.getParameter(0).setRanges(0.,1000000.,1.,1000000.);
+//        this.getParameter(1).setRanges(5.,25.,10.,50.);
+//        this.getParameter(2).setRanges(0.,10.,10.,10.);
+//        this.getParameter(3).setRanges(0.,2.,10.,5.);
+//        this.getParameter(4).setRanges(0.,50.,10.,50.);
+//        this.getParameter(5).setRanges(0.,5.,10.,5.);
         this.initCollections();
     }
 
@@ -67,7 +68,6 @@ public class FTCALCompareApp extends FTApplication{
     private void initCollections() {
         this.calib = new CalibrationData();
         this.cosmic = new FTCALCosmic();
-    
         
         H_CHARGE    = this.getData().addCollection(new H1D("Charge", 80, 0.0, 40.0),"Charge (pC)","Counts",2,"H_CHARGE");
         H_TIME      = this.getData().addCollection(new H1D("T_Time", 80, -20.0, 60.0), "Time (ns)", "Counts", 5, "H_TIME");
@@ -84,28 +84,26 @@ public class FTCALCompareApp extends FTApplication{
         H_REF_COSMIC_MEAN  = new H1D("Reference ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_REF_TIME_MEAN    = new H1D("Reference TIME   MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());        
         
-        String hipoFile = "./Run533Hipotest.hipo";
-        dumpCalib_Ref(hipoFile);
-        
+     
     }
    
     
-    public void dumpCalib_Ref(String hipoFile){
+    private void dumpCalib_Ref(String hipoFile){
         // Cosmic calibration //
         calib.getFile(hipoFile);
         H_REF_CHARGE = calib.getCollection("Energy_histo");
-        H_REF_TIME   = calib.getCollection("Noise_histo"); 
+        H_REF_TIME   = calib.getCollection("Time_histo"); 
         F_Ref_Charge = calib.getCollection("Energy_fct"); 
-        F_Ref_Time   = calib.getCollection("Noise_fct"); 
+        F_Ref_Time   = calib.getCollection("Time_fct"); 
     }
     
    public void dumpCalib(String hipoFile){
         // Cosmic calibration //
         calib.getFile(hipoFile);
         H_CHARGE = calib.getCollection("Energy_histo");
-        H_TIME   = calib.getCollection("Noise_histo"); 
+        H_TIME   = calib.getCollection("Time_histo"); 
         F_Charge = calib.getCollection("Energy_fct"); 
-        F_Time   = calib.getCollection("Noise_fct"); 
+        F_Time   = calib.getCollection("Time_fct"); 
     }
   
   
@@ -151,11 +149,7 @@ public class FTCALCompareApp extends FTApplication{
         
     }
     
-   public void addEvent(List<DetectorCounter> counters) {  
-      
-   } 
-   
-   public void clearCollerctions(){
+   public void clearCollections(){
        this.H_CHARGE.clear();
        this.H_TIME.clear();
        this.F_Charge.clear();
@@ -165,17 +159,31 @@ public class FTCALCompareApp extends FTApplication{
    @Override
     public void resetCollections() {
         
-        for (int component : this.getDetector().getDetectorComponents()) {     
-            this.H_CHARGE.get(0, 0, component).reset();
-            this.H_TIME.get(0, 0, component).reset();       
-            this.H_REF_CHARGE.get(0, 0, component).reset();
-            this.H_REF_TIME.get(0, 0, component).reset();       
+        for (int component : this.getDetector().getDetectorComponents()) {  
+            if(this.H_CHARGE.get(0, 0, component).getEntries()>0)this.H_CHARGE.get(0, 0, component).reset();
+            if(this.H_TIME.get(0, 0, component).getEntries()>0)this.H_TIME.get(0, 0, component).reset();       
+            if(this.H_REF_CHARGE.get(0, 0, component).getEntries()>0)this.H_REF_CHARGE.get(0, 0, component).reset();
+            if(this.H_REF_TIME.get(0, 0, component).getEntries()>0)this.H_REF_TIME.get(0, 0, component).reset();   
         }
-        
-        this.H_COSMIC_MEAN.reset();
-        this.H_TIME_MEAN.reset();
-        this.H_REF_COSMIC_MEAN.reset();
-        this.H_REF_TIME_MEAN  .reset();
+        if(this.H_COSMIC_MEAN.getEntries()>0)this.H_COSMIC_MEAN.reset();
+        if(this.H_TIME_MEAN.getEntries()>0)this.H_TIME_MEAN.reset();
+        if(this.H_REF_COSMIC_MEAN.getEntries()>0)this.H_REF_COSMIC_MEAN.reset();
+        if(this.H_REF_TIME_MEAN.getEntries()>0)this.H_REF_TIME_MEAN.reset();
     } 
+    
+    public void fileSelection(){
+        JFileChooser fc = new JFileChooser();  // file chooser   
+        String outputFileName = "";
+        String buttonFileName = "";
+        fc.setCurrentDirectory(new File(outputFileName));
+	int returnValue = fc.showOpenDialog(null);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            buttonFileName = fc.getSelectedFile().getAbsolutePath();
+            outputFileName = buttonFileName;
+        }
+       
+        if(outputFileName=="")System.out.println("Comparison: No file chosen");
+        else dumpCalib_Ref(outputFileName);
+    }
     
 }

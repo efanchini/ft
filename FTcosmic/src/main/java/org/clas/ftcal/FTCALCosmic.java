@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -32,11 +31,9 @@ import org.jlab.clas12.detector.FADCBasicFitter;
 import org.root.attr.ColorPalette;
 import org.clas.tools.ExtendedFADCFitter;
 import org.clas.tools.FitData;
+import org.clas.tools.HipoFile;
 import org.clas.tools.Miscellaneous;
 import org.clas.tools.NoGridCanvas;
-import org.jlab.clas.detector.DetectorCollection;
-import org.root.func.F1D;
-import org.root.histogram.H1D;
 
 
 
@@ -71,13 +68,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     EventDecoder decoder;
     ExtendedFADCFitter eFADCFitter = new ExtendedFADCFitter();
    
-    
-    // ArrayList
-    //ArrayList<DetectorCollection> dc = new ArrayList<DetectorCollection>();
-    //ArrayList<String>          dcID = new ArrayList<String>();
-    
-    
-    
+
     public EventDecoder getDecoder() {
         return decoder;
     }
@@ -148,7 +139,6 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         tabbedPane.add(ftNoise.getCanvas(ftNoise.getName()).getName(),ftNoise.getCanvas(ftNoise.getName()));
         tabbedPane.add(ftCosmic.getCanvas("Energy").getName(),ftCosmic.getCanvas("Energy"));
         tabbedPane.add(ftCosmic.getCanvas("Time").getName(),ftCosmic.getCanvas("Time"));
-//        tabbedPane.add("Time"        ,this.canvasTime);
         tabbedPane.add("Summary"     ,canvasTable);
         tabbedPane.add(ftCompare.getCanvas("Comparison").getName(),ftCompare.getCanvas("Comparison"));
         tabbedPane.addChangeListener(this);
@@ -169,12 +159,10 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         buttonPane.add(cfitBtn);
         JButton fileBtn = new JButton("Save to File");
         fileBtn.addActionListener(this);
+        buttonPane.add(fileBtn);
         JButton fCpr = new JButton("File Comparison");
         fCpr.addActionListener(this);
-        buttonPane.add(fileBtn);
-
-//        JPanel viewPane = new JPanel();
-//        viewPane.setLayout(new BorderLayout());        
+        buttonPane.add(fCpr);
  
         radioPane.add(ftNoise.getRadioPane());
         radioPane.add(ftCosmic.getRadioPane());
@@ -229,8 +217,10 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         System.out.println("FTCALViewerModule ACTION = " + e.getActionCommand());
         if (e.getActionCommand().compareTo("Clear Histograms") == 0) {
             this.resetHistograms();
+            
         }
         if (e.getActionCommand().compareTo("Fit Histograms") == 0) {
+            System.out.println("ERICA: FTCALCosmic.java: Fit histograms");
             this.ftCosmic.fitCollections();
         }
         if (e.getActionCommand().compareTo("Save to File") == 0) {
@@ -240,10 +230,8 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             this.ftCosmic.customizeFit(keySelect);        
         }
         if (e.getActionCommand().compareTo("File Comparison") == 0) {
-
-            
-             //firstEvent();
-
+            // To be completed
+           this.ftCompare.fileSelection();
         }
         this.view.repaint();
     }
@@ -255,12 +243,11 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         this.ftCosmic.setCanvasSelect(canvasSelect);
         this.updateTable();
         this.view.repaint();
-          
         if(canvasSelect=="Comparison"){
-            this.ftCompare.updateCanvas(keySelect);// compare
-            this.ftCompare.clearCollerctions();
-            String hipotmpfile = extra.extractFileName("./tmp.txt", "",".hipo");
-            this.ftCosmic.saveToFile(hipotmpfile);
+            this.ftCompare.clearCollections();
+            this.ftCompare.updateCanvas(keySelect);
+            String hipotmpfile = "./tmp.hipo";
+            this.writeHipoFile(hipotmpfile);
             this.ftCompare.dumpCalib(hipotmpfile);
         }
     }
@@ -285,7 +272,6 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
 
     public void processDecodedEvent() {
         
-        
         nProcessed++;
 
         List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
@@ -295,9 +281,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         //this.ftCompare.addEvent(counters);// ERICA DA RIMETTERE
 
         this.ftEvent.updateCanvas(keySelect);
-        //this.dcHits.show();
         this.view.repaint();
-        //if(nProcessed==3)firstEvent();
   
     }    
     
@@ -329,6 +313,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             ftCosmic.getRadioPane().setVisible(false);
             Color col = ftEvent.getColor(paddle);
             shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+            
         }
         else if(canvasSelect == "Noise") {
             ftNoise.getRadioPane().setVisible(true);
@@ -340,7 +325,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             ftNoise.getRadioPane().setVisible(false);
             ftCosmic.getRadioPane().setVisible(true);
             Color col = ftCosmic.getColor(paddle);
-            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+            shape.setColor(col.getRed(),col.getGreen(),col.getBlue()); 
         }
         else if(canvasSelect == "Summary") {
             ftNoise.getRadioPane().setVisible(false);
@@ -389,16 +374,6 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     public void valueChanged(ListSelectionEvent e) {
         this.updateTable();
         if (e.getValueIsAdjusting()) return;
-//        int selectedRow = canvasTable.getTable().getSelectedRow();
-//        int selectedColumn = canvasTable.getTable().getSelectedColumn();
-//        String selectedVl = (String)summaryTable.getValueAt(selectedRow, selectedColumn);
-//        String selectedId = (String)summaryTable.getValueAt(selectedRow, 2);
-//        System.out.println("Selection has changed: row "      + selectedRow + " columnn "   + selectedColumn);
-//        System.out.println("                       content "  + selectedVl  + " component " + selectedId );
-//        if(summaryTable.isRowValid(selectedRow))
-//        System.out.println("                       valid = true" );
-//        else
-//        System.out.println("                       valid = false" );       
         this.view.repaint();
     }
     
@@ -407,7 +382,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         FitData cosmicFile = new FitData();
         
         // TXT FILE //
-        String outputFileName = extra.extractFileName("", "_Fit",".txt");
+        String outputFileName = "Run_Fit.txt";
         String buttonFileName = "";
         this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
@@ -418,47 +393,22 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             cosmicFile.writeFile(outputFileName, summaryTable);
             
         }
-        String hipoFileName = extra.extractFileName("./test.txt", "",".hipo");
+         //Hipofile
+        String hipoFileName = "./test.hipo";
         if(buttonFileName!="")hipoFileName = extra.extractFileName(buttonFileName, "",".hipo");
-        this.ftCosmic.saveToFile(hipoFileName);
+        writeHipoFile(hipoFileName);
         
         // CCDB File //
         String CCDBoutFile = extra.extractFileName("Cosmic.txt", "_CCDB",".txt");
         cosmicFile.CCDBcosmic(CCDBoutFile, summaryTable);
-        
     }
+   
+   public void writeHipoFile(String filename){
+        HipoFile histofile = new HipoFile(filename);
+        this.ftCosmic.saveToFile(histofile);
+        this.ftNoise.saveToFile(histofile);
+        histofile.writeHipoFile(filename);
+        //histofile.browsFile(hipoFileName);
+   }
 
-//private void firstEvent(){
-//    System.out.println("ERICA: ftcosmic");
-//    getAppDatasets(this.ftEvent.getData().getLabels(),   this.ftEvent.getData().getData(),  "ftEvent");
-//    getAppDatasets(this.ftNoise.getData().getLabels(),   this.ftNoise.getData().getData(),  "ftNoise");
-//    getAppDatasets(this.ftCosmic.getData().getLabels(),  this.ftCosmic.getData().getData(), "ftCosmic");
-//    getAppDatasets(this.ftCompare.getData().getLabels(), this.ftCompare.getData().getData(),"ftCompare");
-//}
-//    
-//private void getAppDatasets(ArrayList labels, ArrayList detcol, String app){
-//    String id;
-//        for(int i=0; i< labels.size(); i++){
-//            this.dc.add((DetectorCollection) detcol.get(i));
-//            id=app+"_"+(String)labels.get(i);
-//            this.dcID.add(id);
-//            System.out.println("ERICA TEST: -"+this.dc.get(i).getName()+"-  -"+this.dcID.get(i)+"-");
-//        }
-//}
-//        
-//public DetectorCollection getDataSet(int j){
-//        System.out.println("ERICA COSMIC: "+this.dc.toString());
-//        return this.dc.get(j);
-//    }
-//    
-//    public ArrayList getData(){
-//        System.out.println("ERICA COSMIC: "+this.dc.toString());
-//        return this.dc;
-//    }
-//    
-//    public ArrayList getLabels(){
-//        System.out.println("ERICA COSMIC: "+this.dcID.size());
-//        return this.dcID;
-//    }
-//    
 }
