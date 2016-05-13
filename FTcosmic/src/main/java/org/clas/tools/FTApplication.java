@@ -234,19 +234,23 @@ public class FTApplication implements ActionListener {
     }
     
     public void fitBook(DetectorCollection<H1D> h, DetectorCollection<F1D> f){
+       
         JFrame     frame = new JFrame();
         CanvasBook book  = new CanvasBook(4,4);
+        
         for(int key : this.detector.getDetectorComponents()) {
             if(h.hasEntry(0, 0, key)) {
                 book.add(h.get(0,0,key)," ");
                 book.add(f.get(0,0,key),"same"); 
             }
          }
+        
         book.reset();
         frame.add(book);
         frame.pack();
         frame.setVisible(true);
         book.drawNextBack(false);
+        
     }
 
     public ExtendedFADCFitter getFitter() {

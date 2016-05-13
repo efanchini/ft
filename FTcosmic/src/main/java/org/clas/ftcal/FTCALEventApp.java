@@ -50,6 +50,12 @@ public class FTCALEventApp extends FTApplication {
             if(H_WAVE.hasEntry(0, 0, key)) {
                 H_WAVE.get(0, 0, key).reset();
                 short pulse[] = counter.getChannels().get(0).getPulse();
+//                 //for run609 //
+//                if(key==9 || key==10 || key==31 || key==32 ||key==53 ||key==54 ||key==75 ||key==76 ||key==97 ||key==98 ||
+//                    key==118 ||  key==119 || key==120 ||  key==140 ||key==141){
+//                    this.getFitter().fitException(counter.getChannels().get(0), 4, 24, 60, 120);
+//                }
+//                else this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
                 this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));                
                 for (int i = 0; i < Math.min(pulse.length, H_WAVE.get(0, 0, key).getAxis().getNBins()); i++) {
                     H_WAVE.get(0, 0, key).fill(i, pulse[i]);

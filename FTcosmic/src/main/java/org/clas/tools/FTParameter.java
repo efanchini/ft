@@ -122,6 +122,7 @@ public class FTParameter {
         }
         else {
             col = palette.getColor3D(value*this.parScale, this.parLimit*this.parScale, true);
+         
         }
         return col;
     }
