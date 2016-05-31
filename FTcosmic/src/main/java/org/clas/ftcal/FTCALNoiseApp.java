@@ -39,15 +39,15 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         this.addCanvas("Noise");
         this.getCanvas("Noise").divideCanvas(2, 2);
         this.addFields("Status", "Pedestal Mean", "Pedestal RMS", "Noise");
-        this.getParameter(0).setRanges(0.,0.,1.,1.);
-        this.getParameter(1).setRanges(100.,300.,1.,400.);
-        this.getParameter(2).setRanges(0.,10.,10.,10.);
-        this.getParameter(3).setRanges(1.,1.5,1.,2.);
+        this.getParameter(0).setRanges(0.0,0.0,1.0,1.0);
+        this.getParameter(1).setRanges(100.,300.,1.0,400.0);
+        this.getParameter(2).setRanges(0.0,10.0,10.0,10.0);
+        this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);
         this.initCollections();
     }
 
     private void initCollections() {
-        H_PED   = this.getData().addCollection(new H1D("Pedestal", 400, 100., 300.0),"Pedestal (fADC counts)","Counts",2,"H_PED");
+        H_PED   = this.getData().addCollection(new H1D("Pedestal", 400, 100.0, 300.0),"Pedestal (fADC counts)","Counts",2,"H_PED");
         H_NOISE = this.getData().addCollection(new H1D("Noise", 200, 0.0, 10.0),"RMS (mV)","Counts",4,"H_NOISE"); 
         pedestalMEAN    = new double[this.getDetector().getNComponents()];
         pedestalRMS     = new double[this.getDetector().getNComponents()];

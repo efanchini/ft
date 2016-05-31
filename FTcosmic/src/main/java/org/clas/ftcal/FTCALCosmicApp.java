@@ -11,6 +11,7 @@ import java.util.List;
 import org.clas.tools.CustomizeFit;
 import org.clas.tools.FTApplication;
 import org.clas.tools.FTDetector;
+import org.clas.tools.FitParametersFile;
 import org.clas.tools.HipoFile;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.DetectorCounter;
@@ -221,6 +222,10 @@ public class FTCALCosmicApp extends FTApplication {
         H_COSMIC_SIGMA.setBinContent(key, F_ChargeLandau.get(0, 0, key).getParameter(2));
         H_COSMIC_CHI2.setBinContent(key, F_ChargeLandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
                                         /F_ChargeLandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet()));
+//        System.out.println("ERICA FIT summary table: key: "+key+" chi: "+F_ChargeLandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
+//                +" ndf: "+F_ChargeLandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet())+"  chi/ndf: "
+//        +F_ChargeLandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
+//                                        /F_ChargeLandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet()));
     }
 
     private void updateTimeFitResults(int key){
@@ -414,6 +419,10 @@ public class FTCALCosmicApp extends FTApplication {
         }
         
         return col;
+    }
+    
+    public void addCosmicToFile(FitParametersFile file) {
+        file.add(this.F_ChargeLandau, this.H_COSMIC_CHARGE);
     }
     
     public void saveToFile(HipoFile histofile) {

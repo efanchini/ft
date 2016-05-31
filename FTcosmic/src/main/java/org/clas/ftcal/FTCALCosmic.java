@@ -7,7 +7,10 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -30,7 +33,7 @@ import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCBasicFitter;
 import org.root.attr.ColorPalette;
 import org.clas.tools.ExtendedFADCFitter;
-import org.clas.tools.FitData;
+import org.clas.tools.FitParametersFile;
 import org.clas.tools.HipoFile;
 import org.clas.tools.Miscellaneous;
 import org.clas.tools.NoGridCanvas;
@@ -220,11 +223,15 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             
         }
         if (e.getActionCommand().compareTo("Fit Histograms") == 0) {
-            System.out.println("ERICA: FTCALCosmic.java: Fit histograms");
+            //System.out.println("ERICA: FTCALCosmic.java: Fit histograms");
             this.ftCosmic.fitCollections();
         }
         if (e.getActionCommand().compareTo("Save to File") == 0) {
-            this.saveToFile();
+            try {
+                this.saveToFile();
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(FTCALCosmic.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
         if (e.getActionCommand().compareTo("Customize Fit...") == 0) {
             this.ftCosmic.customizeFit(keySelect);        
@@ -377,20 +384,21 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         this.view.repaint();
     }
     
-   private void saveToFile() {
+   private void saveToFile() throws FileNotFoundException {
         
-        FitData cosmicFile = new FitData();
         
-        // TXT FILE //
-        String outputFileName = "Run_Fit.txt";
+        FitParametersFile cosmicFile = new FitParametersFile();
+        
+        // TXT table summary FILE //
+        String outputFileName = "Run_SummaryTable.txt";
         String buttonFileName = "";
         this.fc.setCurrentDirectory(new File(outputFileName));
 	int returnValue = fc.showSaveDialog(null);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
             buttonFileName = fc.getSelectedFile().getAbsolutePath();
             updateTable();
-            outputFileName = extra.extractFileName(buttonFileName, "_Fit",".txt");
-            cosmicFile.writeFile(outputFileName, summaryTable);
+            outputFileName = extra.extractFileName(buttonFileName, "_SummaryTable",".txt");
+            cosmicFile.writeSummaryTFile(outputFileName, summaryTable);
             
         }
          //Hipofile
@@ -401,6 +409,13 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         // CCDB File //
         String CCDBoutFile = extra.extractFileName("Cosmic.txt", "_CCDB",".txt");
         cosmicFile.CCDBcosmic(CCDBoutFile, summaryTable);
+        
+        //TXT file with fit parameters (Landau for cosmic data) //
+        String cosmicFileName = "./test.hipo";
+        if(buttonFileName!="")cosmicFileName = extra.extractFileName(buttonFileName, "_CosmicFit",".txt");
+        this.ftCosmic.addCosmicToFile(cosmicFile);
+        cosmicFile.writeFitLandauFile(cosmicFileName);
+        
     }
    
    public void writeHipoFile(String filename){
