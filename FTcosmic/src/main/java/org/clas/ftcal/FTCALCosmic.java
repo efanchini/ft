@@ -223,7 +223,6 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             
         }
         if (e.getActionCommand().compareTo("Fit Histograms") == 0) {
-            //System.out.println("ERICA: FTCALCosmic.java: Fit histograms");
             this.ftCosmic.fitCollections();
         }
         if (e.getActionCommand().compareTo("Save to File") == 0) {
@@ -234,13 +233,14 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             }
         }
         if (e.getActionCommand().compareTo("Customize Fit...") == 0) {
-            this.ftCosmic.customizeFit(keySelect);        
+            this.ftCosmic.customizeFit(keySelect);   
         }
         if (e.getActionCommand().compareTo("File Comparison") == 0) {
-            // To be completed
+           this.ftCosmic.fitFastCollections();
            this.ftCompare.fileSelection();
         }
         this.view.repaint();
+        
     }
 
     public void stateChanged(ChangeEvent e) {
@@ -252,10 +252,11 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         this.view.repaint();
         if(canvasSelect=="Comparison"){
             this.ftCompare.clearCollections();
-            this.ftCompare.updateCanvas(keySelect);
+            this.ftCosmic.fitCollections("Comparison");
             String hipotmpfile = "./tmp.hipo";
             this.writeHipoFile(hipotmpfile);
             this.ftCompare.dumpCalib(hipotmpfile);
+            this.ftCompare.updateCanvas(keySelect);
         }
     }
      
@@ -285,8 +286,6 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         this.ftEvent.addEvent(counters);
         this.ftNoise.addEvent(counters);
         this.ftCosmic.addEvent(counters);
-        //this.ftCompare.addEvent(counters);// ERICA DA RIMETTERE
-
         this.ftEvent.updateCanvas(keySelect);
         this.view.repaint();
   
@@ -319,8 +318,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             ftNoise.getRadioPane().setVisible(false);
             ftCosmic.getRadioPane().setVisible(false);
             Color col = ftEvent.getColor(paddle);
-            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
-            
+            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());  
         }
         else if(canvasSelect == "Noise") {
             ftNoise.getRadioPane().setVisible(true);
@@ -343,12 +341,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             if(paddle == Integer.parseInt(selectedKey)) col = new Color(255,0,0);
             shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
         }
-        else if(canvasSelect == "File Comparison") {
-            ftNoise.getRadioPane().setVisible(false);
-            ftCosmic.getRadioPane().setVisible(true);
-            Color col = ftCompare.getColor(paddle);
-            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
-        }
+
         
     }
 
@@ -372,8 +365,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             summaryTable.setValueAtAsDouble(5, Double.parseDouble(chi2)    , 0, 0, key);
             summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 0, 0, key);
             summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 0, 0, key);  
-            
-            
+
         }
     }
     

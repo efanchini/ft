@@ -50,16 +50,18 @@ public class FTCALCompareApp extends FTApplication{
     H1D H_TIME_MEAN        = null;
     H1D H_REF_COSMIC_MEAN  = null;
     H1D H_REF_TIME_MEAN    = null;
-    H1D hCharge            = null;
-    H1D hTime              = null;
-    H1D hRefCharge         = null;
-    H1D hRefTime           = null;
-    H1D hPed               = null;
-    H1D hNoise             = null;
-    H1D hRefPed            = null;
-    H1D hRefNoise          = null;
+    H1D hCharge            = new H1D("hCharge", 80, 0.0, 40.0);
+    H1D hTime              = new H1D("hTime", 80, -20.0, 60.0);
+    H1D hRefCharge         = new H1D("hrCharge", 80, 0.0, 40.0);
+    H1D hRefTime           = new H1D("hrTime", 80, -20.0, 60.0);
+    H1D hPed               = new H1D("hPedestal", 400, 100., 300.0);
+    H1D hNoise             = new H1D("hNoise", 200, 0.0, 10.0);
+    H1D hRefPed            = new H1D("hrPedestal", 400, 100., 300.0);
+    H1D hRefNoise          = new H1D("hrNoise", 200, 0.0, 10.0);
     
      Miscellaneous extra = new Miscellaneous();
+     Boolean refFile = false;
+     String  refFileName ="";
     
     
     
@@ -100,9 +102,7 @@ public class FTCALCompareApp extends FTApplication{
         H_COSMIC_MEAN      = new H1D("ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_TIME_MEAN        = new H1D("TIME   MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_REF_COSMIC_MEAN  = new H1D("Reference ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
-        H_REF_TIME_MEAN    = new H1D("Reference TIME   MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());        
-        
-        
+        H_REF_TIME_MEAN    = new H1D("Reference TIME   MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());         
     }
    
     
@@ -115,6 +115,7 @@ public class FTCALCompareApp extends FTApplication{
         F_Ref_Time   = calib.getCollection("Time_fct"); 
         H_REF_PED    = calib.getCollection("Pedestal_histo");
         H_REF_NOISE  = calib.getCollection("Noise_histo");
+        this.refFile=true;
     }
     
    public void dumpCalib(String hipoFile){
@@ -131,10 +132,10 @@ public class FTCALCompareApp extends FTApplication{
   
     void updateCanvas(int keySelect) {
         String htitle="", xtitle="", ytitle="";
-        
         htitle = "Component "+keySelect;
+        String htitleref="Ref: "+this.refFileName;
         this.getCanvas("Comparison").cd(0);
-        if (this.H_CHARGE.hasEntry(0, 0, keySelect)) {
+        if (this.H_CHARGE.hasEntry(0, 0, keySelect) && this.H_CHARGE.get(0, 0, keySelect).getEntries()!=0) {
             xtitle="Charge (pC)"; 
             ytitle="Counts";
             this.hCharge = this.H_CHARGE.get(0, 0, keySelect).histClone(" ");
@@ -143,10 +144,15 @@ public class FTCALCompareApp extends FTApplication{
             this.hCharge.setXTitle(xtitle);
             this.hCharge.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hCharge);
-            this.getCanvas("Comparison").draw(this.F_Charge.get(0, 0, keySelect),"same");
+            if(this.F_Charge.hasEntry(0, 0, keySelect))this.getCanvas("Comparison").draw(this.F_Charge.get(0, 0, keySelect),"same");
+            
+        }
+        else{
+             this.hCharge = new H1D("hCharge", 80, 0.0, 40.0);
+             this.getCanvas("Comparison").draw(this.hCharge);
         }
         this.getCanvas("Comparison").cd(1);
-        if (this.H_TIME.hasEntry(0, 0, keySelect)) {
+        if (this.H_TIME.hasEntry(0, 0, keySelect) && this.H_TIME.get(0, 0, keySelect).getEntries()!=0) {
             xtitle="Time (ns)"; 
             ytitle="Counts";
             this.hTime = this.H_TIME.get(0, 0, keySelect).histClone(" ");
@@ -155,68 +161,98 @@ public class FTCALCompareApp extends FTApplication{
             this.hTime.setXTitle(xtitle);
             this.hTime.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hTime);
-            this.getCanvas("Comparison").draw(this.F_Time.get(0, 0, keySelect),"same");
+            if(this.F_Time.hasEntry(0, 0, keySelect))this.getCanvas("Comparison").draw(this.F_Time.get(0, 0, keySelect),"same");
+        }else{
+             hTime = new H1D("hTime", 80, -20.0, 60.0);
+             this.getCanvas("Comparison").draw(this.hTime);
         }
         this.getCanvas("Comparison").cd(2);
-        if (this.H_PED.hasEntry(0, 0, keySelect)) {
-            xtitle="Pedestal"; 
+        if (this.H_PED.hasEntry(0, 0, keySelect) && this.H_PED.get(0, 0, keySelect).getEntries()!=0) {
+            xtitle="Pedestal (fADC counts)"; 
             ytitle="Counts";
             this.hPed = this.H_PED.get(0, 0, keySelect).histClone(" ");
-            this.hPed.setFillColor(5);
+            this.hPed.setFillColor(2);
             this.hPed.setTitle(htitle);
             this.hPed.setXTitle(xtitle);
             this.hPed.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hPed);
+        }else{
+             hPed = new H1D("hPedestal", 400, 100., 300.0);
+             this.getCanvas("Comparison").draw(this.hPed);
         }   
         this.getCanvas("Comparison").cd(3);
-        if (this.H_NOISE.hasEntry(0, 0, keySelect)) {
-            xtitle="Noise"; 
+        if (this.H_NOISE.hasEntry(0, 0, keySelect) && this.H_NOISE.get(0, 0, keySelect).getEntries()!=0) {
+            xtitle="Noise RMS (mV)"; 
             ytitle="Counts";
             this.hNoise = this.H_NOISE.get(0, 0, keySelect).histClone(" ");
-            this.hNoise.setFillColor(5);
+            this.hNoise.setFillColor(4);
             this.hNoise.setTitle(htitle);
             this.hNoise.setXTitle(xtitle);
             this.hNoise.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hNoise);
-        }   
+        } else{
+             hNoise = new H1D("hNoise", 200, 0.0, 10.0);
+             this.getCanvas("Comparison").draw(this.hNoise);
+        }  
         this.getCanvas("Comparison").cd(4);
-        if (this.H_REF_CHARGE.hasEntry(0, 0, keySelect)) {
+        if (this.H_REF_CHARGE.hasEntry(0, 0, keySelect) && this.H_REF_CHARGE.get(0, 0, keySelect).getEntries()!=0 && refFile) {
+            xtitle="Charge (pC)"; 
+            ytitle="Counts";
             this.hRefCharge = this.H_REF_CHARGE.get(0, 0, keySelect).histClone(" ");
             this.hRefCharge.setFillColor(22);
-            this.hRefCharge.setTitle(this.H_REF_CHARGE.get(0, 0, keySelect).getTitle());
-            this.hRefCharge.setXTitle(this.H_REF_CHARGE.get(0, 0, keySelect).getXTitle());
-            this.hRefCharge.setYTitle(this.H_REF_CHARGE.get(0, 0, keySelect).getYTitle());
+            this.hRefCharge.setTitle(htitleref);
+            this.hRefCharge.setXTitle(xtitle);
+            this.hRefCharge.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hRefCharge);
-        }
+            if(this.F_Ref_Charge.hasEntry(0, 0, keySelect))this.getCanvas("Comparison").draw(this.F_Ref_Charge.get(0, 0, keySelect),"same");
+        }else{
+             hRefCharge         = new H1D("hrCharge", 80, 0.0, 40.0);
+             this.getCanvas("Comparison").draw(this.hRefCharge);
+             
+        }  
         this.getCanvas("Comparison").cd(5);
-        if (this.H_REF_TIME.hasEntry(0, 0, keySelect)) {
+        if (this.H_REF_TIME.hasEntry(0, 0, keySelect) && this.H_REF_TIME.get(0, 0, keySelect).getEntries()!=0 && refFile) {
+            xtitle="Time (ns)"; 
+            ytitle="Counts";
             this.hRefTime = this.H_REF_TIME.get(0, 0, keySelect).histClone(" ");
-            this.hRefTime.setFillColor(24);
-            this.hRefTime.setTitle(this.H_REF_TIME.get(0, 0, keySelect).getTitle());
-            this.hRefTime.setXTitle(this.H_REF_TIME.get(0, 0, keySelect).getXTitle());
-            this.hRefTime.setYTitle(this.H_REF_TIME.get(0, 0, keySelect).getYTitle());
-            this.getCanvas("Comparison").draw(this.hRefTime);    
+            this.hRefTime.setFillColor(25);
+            this.hRefTime.setTitle(htitleref);
+            this.hRefTime.setXTitle(xtitle);
+            this.hRefTime.setYTitle(ytitle);
+            this.getCanvas("Comparison").draw(this.hRefTime);  
+            if(this.F_Ref_Time.hasEntry(0, 0, keySelect))this.getCanvas("Comparison").draw(this.F_Ref_Time.get(0, 0, keySelect),"same");
+        }else{
+             hRefTime           = new H1D("hrTime", 80, -20.0, 60.0);
+             this.getCanvas("Comparison").draw(this.hRefTime);
         }
         this.getCanvas("Comparison").cd(6);
-        if (this.H_REF_PED.hasEntry(0, 0, keySelect)) {
+        if (this.H_REF_PED.hasEntry(0, 0, keySelect) && this.H_REF_PED.get(0, 0, keySelect).getEntries()!=0 && refFile) {
+            xtitle="Pedestal (fADC counts)"; 
+            ytitle="Counts";
             this.hRefPed = this.H_REF_PED.get(0, 0, keySelect).histClone(" ");
-            this.hRefPed.setFillColor(23);
-            this.hRefPed.setTitle(this.H_REF_PED.get(0, 0, keySelect).getTitle());
-            this.hRefPed.setXTitle(this.H_REF_PED.get(0, 0, keySelect).getXTitle());
-            this.hRefPed.setYTitle(this.H_REF_PED.get(0, 0, keySelect).getYTitle());
+            this.hRefPed.setFillColor(22);
+            this.hRefPed.setTitle(htitleref);
+            this.hRefPed.setXTitle(xtitle);
+            this.hRefPed.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hRefPed);    
+        }else{
+             hRefPed = new H1D("hrPedestal", 400, 100., 300.0);
+             this.getCanvas("Comparison").draw(this.hRefPed);
         }
         this.getCanvas("Comparison").cd(7);
-        if (this.H_REF_NOISE.hasEntry(0, 0, keySelect)) {
-            xtitle="Noise"; 
+        if (this.H_REF_NOISE.hasEntry(0, 0, keySelect) && this.H_REF_NOISE.get(0, 0, keySelect).getEntries()!=0 && refFile) {
+            xtitle="Noise RMS (mV)"; 
             ytitle="Counts";
             this.hRefNoise = this.H_REF_NOISE.get(0, 0, keySelect).histClone(" ");
-            this.hRefNoise.setFillColor(5);
-            this.hRefNoise.setTitle(htitle);
+            this.hRefNoise.setFillColor(24);
+            this.hRefNoise.setTitle(htitleref);
             this.hRefNoise.setXTitle(xtitle);
             this.hRefNoise.setYTitle(ytitle);
             this.getCanvas("Comparison").draw(this.hRefNoise);
-        }   
+        } else{
+             hRefNoise  = new H1D("hrNoise", 200, 0.0, 10.0);
+             this.getCanvas("Comparison").draw(this.hRefNoise);
+        }  
     }
     
    public void clearCollections(){
@@ -224,6 +260,8 @@ public class FTCALCompareApp extends FTApplication{
        this.H_TIME.clear();
        this.F_Charge.clear();
        this.F_Time.clear();
+       this.H_NOISE.clear();
+       this.H_PED.clear();
    }
     
    @Override
@@ -233,7 +271,11 @@ public class FTCALCompareApp extends FTApplication{
             if(this.H_CHARGE.get(0, 0, component).getEntries()>0)this.H_CHARGE.get(0, 0, component).reset();
             if(this.H_TIME.get(0, 0, component).getEntries()>0)this.H_TIME.get(0, 0, component).reset();       
             if(this.H_REF_CHARGE.get(0, 0, component).getEntries()>0)this.H_REF_CHARGE.get(0, 0, component).reset();
-            if(this.H_REF_TIME.get(0, 0, component).getEntries()>0)this.H_REF_TIME.get(0, 0, component).reset();   
+            if(this.H_REF_TIME.get(0, 0, component).getEntries()>0)this.H_REF_TIME.get(0, 0, component).reset(); 
+            if(this.H_REF_PED.get(0, 0, component).getEntries()>0)this.H_REF_PED.get(0, 0, component).reset(); 
+            if(this.H_REF_NOISE.get(0, 0, component).getEntries()>0)this.H_REF_NOISE.get(0, 0, component).reset(); 
+            if(this.H_PED.get(0, 0, component).getEntries()>0)this.H_PED.get(0, 0, component).reset(); 
+            if(this.H_NOISE.get(0, 0, component).getEntries()>0)this.H_NOISE.get(0, 0, component).reset();       
         }
         if(this.H_COSMIC_MEAN.getEntries()>0)this.H_COSMIC_MEAN.reset();
         if(this.H_TIME_MEAN.getEntries()>0)this.H_TIME_MEAN.reset();
@@ -251,9 +293,11 @@ public class FTCALCompareApp extends FTApplication{
             buttonFileName = fc.getSelectedFile().getAbsolutePath();
             outputFileName = buttonFileName;
         }
-       
         if(outputFileName=="")System.out.println("Comparison: No file chosen");
-        else dumpCalib_Ref(outputFileName);
+        else {
+            dumpCalib_Ref(outputFileName);
+            this.refFileName = extra.extractRunN(outputFileName);   
+        }
     }
     
 }
