@@ -5,14 +5,8 @@
  */
 package org.clas.tools;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import org.jlab.clas.detector.DetectorCollection;
-import org.root.func.F1D;
-import org.root.histogram.H1D;
 
 /**
  *
@@ -60,6 +54,14 @@ public class Miscellaneous {
          return final_filename;
      }
      
-
+    public String extractRunN(String name){
+        // Name types like yyyyyyyyyyy.yyy.yy.yyy.type  and remove (.type) ///
+         String extraction="";
+         if(!name.isEmpty()){
+             extraction= name.substring(0,name.lastIndexOf("."));
+             extraction= name.substring(extraction.lastIndexOf("/")+1, extraction.length());
+         }
+         return extraction;
+     }
         
 }

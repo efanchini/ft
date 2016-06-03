@@ -46,6 +46,7 @@ public class FTCALCosmicApp extends FTApplication {
     double[] detectorIDs;
     double[] timeCROSS;
     double[] timeHALF;
+    String compcanvas="";
 
     
     // decoder related information
@@ -57,6 +58,7 @@ public class FTCALCosmicApp extends FTApplication {
     int ncry_cosmic = 4;        // number of crystals above threshold in a column for cosmics selection
 
     CustomizeFit cfit = new CustomizeFit();
+    
     
     public FTCALCosmicApp(FTDetector d) {
         super(d);
@@ -171,8 +173,8 @@ public class FTCALCosmicApp extends FTApplication {
         double hAmp  = htime.getBinContent(htime.getMaximumBin());
         double hMean = htime.getAxis().getBinCenter(htime.getMaximumBin());
         double hRMS  = htime.getRMS();        
-        double rangeMin = (hMean - 2.5*hRMS) -1; 
-        double rangeMax = (hMean + 2.5*hRMS) +1;     
+        double rangeMin = (hMean - 2.5*hRMS); 
+        double rangeMax = (hMean + 2.5*hRMS);     
         F_TimeGauss.add(0, 0, key, new F1D("gaus", rangeMin, rangeMax));
         F_TimeGauss.get(0, 0, key).setName("Gaus_"+key);
         F_TimeGauss.get(0, 0, key).setParameter(0, hAmp);
@@ -199,11 +201,12 @@ public class FTCALCosmicApp extends FTApplication {
             //else System.out.println("Skipping charge fit of component: " + key + 
             //                        ", only " + H_COSMIC_CHARGE.get(0, 0, key).getEntries() + " events");
             if(H_COSMIC_THALF.get(0,0,key).getEntries()>0) {    
-                this.fitTime(key);
+              this.fitTime(key);
             } 
         }     
-        if(     this.getCanvasSelect() == "Energy") this.fitBook(H_COSMIC_CHARGE,F_ChargeLandau);
+        if(this.getCanvasSelect() == "Energy" && this.compcanvas!="Comparison") this.fitBook(H_COSMIC_CHARGE,F_ChargeLandau);
         else if(this.getCanvasSelect() == "Time")   this.fitBook(H_COSMIC_THALF,F_TimeGauss);
+        
     }
     
      public void fitFastCollections() {
@@ -216,16 +219,17 @@ public class FTCALCosmicApp extends FTApplication {
             }   
         }
     }
+        public void fitCollections(String canvas) {
+            this.compcanvas = canvas;
+            fitCollections();
+        }
+    
       
     private void updateChargeFitResults(int key){
         H_COSMIC_MEAN.setBinContent(key, F_ChargeLandau.get(0, 0, key).getParameter(1));
         H_COSMIC_SIGMA.setBinContent(key, F_ChargeLandau.get(0, 0, key).getParameter(2));
         H_COSMIC_CHI2.setBinContent(key, F_ChargeLandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
                                         /F_ChargeLandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet()));
-//        System.out.println("ERICA FIT summary table: key: "+key+" chi: "+F_ChargeLandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
-//                +" ndf: "+F_ChargeLandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet())+"  chi/ndf: "
-//        +F_ChargeLandau.get(0, 0, key).getChiSquare(H_COSMIC_CHARGE.get(0,0,key),"NR")
-//                                        /F_ChargeLandau.get(0, 0, key).getNDF(H_COSMIC_CHARGE.get(0,0,key).getDataSet()));
     }
 
     private void updateTimeFitResults(int key){
@@ -234,17 +238,22 @@ public class FTCALCosmicApp extends FTApplication {
     }
 
     @Override
-    public void customizeFit(int key){     
+    public void customizeFit(int key){ 
+        //System.out.println("customizeFit: "+this.getCanvasSelect());
         if(this.getCanvasSelect() == "Energy") {
             cfit.FitPanel(H_COSMIC_CHARGE.get(0,0,key), F_ChargeLandau.get(0,0,key),"LQ");
             this.getCanvas("Energy").update();
-            this.updateChargeFitResults(key);
-            
+            this.updateChargeFitResults(key); 
         }
         else if(this.getCanvasSelect() == "Time") {
             cfit.FitPanel(H_COSMIC_THALF.get(0,0,key), F_TimeGauss.get(0,0,key),"NQ");
             this.getCanvas("Time").update();            
             this.updateTimeFitResults(key);
+        }
+        else if(this.getCanvasSelect() == "Comparison") {
+            cfit.FitPanel(H_COSMIC_CHARGE.get(0,0,key), F_ChargeLandau.get(0,0,key),"LQ");
+            this.getCanvas("Comparison").update();
+            this.updateChargeFitResults(key);
         }
     }
 
@@ -430,5 +439,6 @@ public class FTCALCosmicApp extends FTApplication {
         histofile.addToMap("Energy_fct", this.F_ChargeLandau);
         histofile.addToMap("Time_histo", this.H_COSMIC_THALF);
         histofile.addToMap("Time_fct", this.F_TimeGauss);
+        histofile.addToMap("Fadc_Cosmic", this.H_COSMIC_fADC);
     }
 }
