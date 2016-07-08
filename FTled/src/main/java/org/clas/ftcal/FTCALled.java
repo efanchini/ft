@@ -55,6 +55,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
     EmbeddedCanvas canvasNoise     = new EmbeddedCanvas();
     EmbeddedCanvas canvasCharge    = new EmbeddedCanvas();
     EmbeddedCanvas canvasAmpli     = new EmbeddedCanvas();
+    EmbeddedCanvas canvasWidth     = new EmbeddedCanvas();
     EmbeddedCanvas canvasTime      = new EmbeddedCanvas();
     DetectorShapeTabView view = new DetectorShapeTabView();
     HashTable  summaryTable   = null; 
@@ -69,6 +70,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
     DetectorCollection<H1D> H_LED_fADC   = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_LED_CHARGE = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_LED_VMAX   = new DetectorCollection<H1D>();
+    DetectorCollection<H1D> H_LED_WIDTH   = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_LED_TCROSS  = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H_LED_THALF   = new DetectorCollection<H1D>();
     H1D hfADC      = null;
@@ -84,11 +86,14 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
     DetectorCollection<GraphErrors> G_LED_CHARGE_SELECT = new DetectorCollection<GraphErrors>();
     DetectorCollection<GraphErrors> G_LED_AMPLI         = new DetectorCollection<GraphErrors>();
     DetectorCollection<GraphErrors> G_LED_AMPLI_SELECT  = new DetectorCollection<GraphErrors>();
+    DetectorCollection<GraphErrors> G_LED_WIDTH         = new DetectorCollection<GraphErrors>();
 
     double[] ledCharge;
     double[] ledCharge2;
     double[] ledAmpli;
     double[] ledAmpli2;
+    double[] ledWidth;
+    double[] ledWidth2;
     int[]    ledEvent;    
     int[]    ledNEvents;
     int nLedEvents=50;
@@ -102,6 +107,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
     double[] cosmicCharge;
     double[] timeCross;
     double[] timeHalf;
+    double[] fullWidthHM;
     int[] crystalPointers;    
     
     // decoded related information
@@ -118,7 +124,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
 
 
     // analysis parameters
-    int threshold = 100; // 10 fADC value <-> ~ 5mV
+    int threshold = 50; // 10 fADC value <-> ~ 5mV
     int ped_i1 = 1;
     int ped_i2 = 20;
     int pul_i1 = 21;
@@ -164,6 +170,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
         tabbedPane.add("Noise"       ,this.canvasNoise);
         tabbedPane.add("Charge"      ,this.canvasCharge);
         tabbedPane.add("Amplitude"   ,this.canvasAmpli);
+        tabbedPane.add("Width"       ,this.canvasWidth);
         tabbedPane.add("Time"        ,this.canvasTime);
         tabbedPane.add("Summary"     ,canvasTable);
         tabbedPane.addChangeListener(this);
@@ -314,6 +321,36 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
         this.canvasAmpli.setTitleFontSize(16);
         this.canvasAmpli.setAxisTitleFontSize(14);
         this.canvasAmpli.setStatBoxFontSize(8);
+        // Width
+        this.canvasWidth.divide(2, 2);
+        this.canvasWidth.cd(0);
+        this.canvasWidth.setGridX(false);
+        this.canvasWidth.setGridY(false);
+        this.canvasWidth.setAxisFontSize(10);
+        this.canvasWidth.setTitleFontSize(16);
+        this.canvasWidth.setAxisTitleFontSize(14);
+        this.canvasWidth.setStatBoxFontSize(8);
+        this.canvasWidth.cd(1);
+        this.canvasWidth.setGridX(false);
+        this.canvasWidth.setGridY(false);
+        this.canvasWidth.setAxisFontSize(10);
+        this.canvasWidth.setTitleFontSize(16);
+        this.canvasWidth.setAxisTitleFontSize(14);
+        this.canvasWidth.setStatBoxFontSize(8);
+        this.canvasWidth.cd(2);
+        this.canvasWidth.setGridX(false);
+        this.canvasWidth.setGridY(false);
+        this.canvasWidth.setAxisFontSize(10);
+        this.canvasWidth.setTitleFontSize(16);
+        this.canvasWidth.setAxisTitleFontSize(14);
+        this.canvasWidth.setStatBoxFontSize(8);
+        this.canvasWidth.cd(3);
+        this.canvasWidth.setGridX(false);
+        this.canvasWidth.setGridY(false);
+        this.canvasWidth.setAxisFontSize(10);
+        this.canvasWidth.setTitleFontSize(16);
+        this.canvasWidth.setAxisTitleFontSize(14);
+        this.canvasWidth.setStatBoxFontSize(8);
         // time
         this.canvasTime.divide(2, 2);
         this.canvasTime.cd(0);
@@ -503,6 +540,10 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                 H_LED_VMAX.get(0, 0, component).setFillColor(2);
                 H_LED_VMAX.get(0, 0, component).setXTitle("Amplitude (mV)");
                 H_LED_VMAX.get(0, 0, component).setYTitle("Counts");
+                H_LED_WIDTH.add(0, 0, component, new H1D("Width_" + component, title, 300, 0.0, 100.0));
+                H_LED_WIDTH.get(0, 0, component).setFillColor(2);
+                H_LED_WIDTH.get(0, 0, component).setXTitle("FWHM (ns)");
+                H_LED_WIDTH.get(0, 0, component).setYTitle("Counts");
                 H_LED_TCROSS.add(0, 0, component, new H1D("T_TRIG_" + component, title, 200, 60.0, 160.0));
                 H_LED_TCROSS.get(0, 0, component).setFillColor(5);
                 H_LED_TCROSS.get(0, 0, component).setXTitle("Time (ns)");
@@ -540,6 +581,13 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                 G_LED_AMPLI_SELECT.get(0, 0, component).setMarkerColor(2); // color from 0-9 for given palette
                 G_LED_AMPLI_SELECT.get(0, 0, component).setMarkerSize(5); // size in points on the screen
                 G_LED_AMPLI_SELECT.get(0, 0, component).setMarkerStyle(1); // Style can be 1 or 2 
+                G_LED_WIDTH.add(0,0,component, new GraphErrors());
+                G_LED_WIDTH.get(0, 0, component).setTitle(" "); //  title
+                G_LED_WIDTH.get(0, 0, component).setXTitle("Event");             // X axis title
+                G_LED_WIDTH.get(0, 0, component).setYTitle("LED FWHM (ns)");   // Y axis title
+                G_LED_WIDTH.get(0, 0, component).setMarkerColor(1); // color from 0-9 for given palette
+                G_LED_WIDTH.get(0, 0, component).setMarkerSize(5); // size in points on the screen
+                G_LED_WIDTH.get(0, 0, component).setMarkerStyle(1); // Style can be 1 or 2 
                 G_PULSE_ANALYSIS.add(0,0,component, new GraphErrors());
                 G_PULSE_ANALYSIS.get(0, 0, component).setTitle(" "); //  title
                 G_PULSE_ANALYSIS.get(0, 0, component).setXTitle("Event");             // X axis title
@@ -562,11 +610,14 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
         noiseRMS        = new double[332];
         timeCross       = new double[332];
         timeHalf        = new double[332];
+        fullWidthHM     = new double[332];
         crystalPointers = new int[484];
         ledCharge  = new double[484];
         ledCharge2 = new double[484];
         ledAmpli   = new double[484];
         ledAmpli2  = new double[484];
+        ledWidth   = new double[484];
+        ledWidth2  = new double[484];
         ledEvent   = new int[484];
         ledNEvents = new int[484];                
         int ipointer=0;
@@ -661,6 +712,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                 H_LED_VMAX.get(0, 0, component).reset();
                 H_LED_TCROSS.get(0, 0, component).reset();
                 H_LED_THALF.get(0, 0, component).reset();
+                H_LED_WIDTH.get(0, 0, component).reset();
             }
             H_fADC_N.reset();
             H_LED_N.reset();
@@ -701,6 +753,8 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
         private int    pulsePosition=0;
         private double time_3 = 0;
         private double time_7 = 0;
+        private double time_f = 0;
+        private double width = 0;
 
         public double getPedestal() {
             return pedestal;
@@ -736,6 +790,14 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
             else if(mode==7)  time = time_7;
             else System.out.println(" Unknown mode for time calculation, check...");
             return time;
+        }
+
+        public double getTimeF() {
+            return time_f;
+        }
+
+        public double getFWHM() {
+            return width;
         }
 
         public void fit(DetectorChannel dc) {
@@ -782,6 +844,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
             half_max = halfMax;
             time_7 = time_3;
             int t0 = -1;
+            int t1 = -1;
             if(tcross>0) { 
                 for (int bin=tcross-1; bin<pul_i2; bin++) {
                     if (pulse[bin]<=halfMax && pulse[bin+1]>halfMax) {
@@ -789,13 +852,25 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                         break;
                     }
                 }
+                for (int bin=ppos; bin<pul_i2; bin++) {
+                    if (pulse[bin]>halfMax && pulse[bin+1]<=halfMax) {
+                        t1 = bin;
+                        break;
+                    }
+                }
                 if(t0>-1) { 
-                    int t1 = t0 + 1;
+//                    int t1 = t0 + 1;
                     int a0 = pulse[t0];
-                    int a1 = pulse[t1];
+                    int a1 = pulse[t0+1];
                        //final double slope = (a1 - a0); // units = ADC/sample
                        //final double yint = a1 - slope * t1;  // units = ADC 
                     time_7 = ((halfMax - a0)/(a1-a0) + t0)* nsPerSample;
+                }
+                if(t1>-1 && t0>-1) {
+                    int a0 = pulse[t1];
+                    int a1 = pulse[t1+1];
+                    time_f = t1*nsPerSample;//((halfMax - a0)/(a1-a0) + t1)* nsPerSample;
+                    width  = time_f - time_7;
                 }
             }
        }
@@ -809,6 +884,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
 
         //    System.out.println("event #: " + nProcessed);
         List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
+        System.out.println(counters.size());
         FTCALled.MyADCFitter fadcFitter = new FTCALled.MyADCFitter();
         H_WMAX.reset();
         H_TCROSS.reset();
@@ -848,14 +924,17 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                 H_LED_VMAX.get(0, 0, key).fill((fadcFitter.getWave_Max()-fadcFitter.getPedestal())*LSB);
                 H_LED_TCROSS.get(0, 0, key).fill(fadcFitter.getTime(3)-tPMTCross);
                 H_LED_THALF.get(0, 0, key).fill(fadcFitter.getTime(7)-tPMTHalf); 
+                H_LED_WIDTH.get(0, 0, key).fill(fadcFitter.getFWHM()); 
                 G_PULSE.add(fadcFitter.getTime(3)/nsPerSample,fadcFitter.getPedestal()+threshold);
                 G_PULSE.add(fadcFitter.getTime(7)/nsPerSample,fadcFitter.getHalf_Max());
                 G_PULSE.add(fadcFitter.getPulsePosition(),fadcFitter.getPulse_Max());
+                G_PULSE.add(fadcFitter.getTimeF()/nsPerSample,fadcFitter.getHalf_Max());
                 
                 // fill info for time dependence evaluation
                 if(doesThisCrystalExist(key)) {
                     double ledCH = counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50;
                     double ledAM = (fadcFitter.getWave_Max()-fadcFitter.getPedestal())*LSB;
+                    double ledFW = (fadcFitter.getFWHM());
                     if(ledEvent[key]==-1) {
                         ledEvent[key] = nProcessed;
                     }
@@ -865,6 +944,8 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                             ledCharge2[key] = ledCharge2[key]/ledNEvents[key]; 
                             ledAmpli[key]  = ledAmpli[key]/ledNEvents[key];
                             ledAmpli2[key] = ledAmpli2[key]/ledNEvents[key]; 
+                            ledWidth[key]  = ledWidth[key]/ledNEvents[key];
+                            ledWidth2[key] = ledWidth2[key]/ledNEvents[key]; 
                             double ledX  = ledEvent[key]+nLedEvents/2.;
                             double ledY  = ledCharge[key];
                             double ledEX = nLedEvents;
@@ -875,11 +956,17 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                             ledEY = sqrt(ledAmpli2[key]-ledAmpli[key]*ledAmpli[key])/sqrt(ledNEvents[key]);
                             G_LED_AMPLI.get(0, 0, key).add(ledX,ledY,ledEX,ledEY);
                             if(G_LED_AMPLI.get(0, 0, key).getDataSize()>nLedSkip) G_LED_AMPLI_SELECT.get(0, 0, key).add(ledX,ledY,ledEX,ledEY); 
+                            ledY  = ledWidth[key];
+                            ledEY = sqrt(ledWidth2[key]-ledWidth[key]*ledWidth[key])/sqrt(ledNEvents[key]);
+                            G_LED_WIDTH.get(0, 0, key).add(ledX,ledY,ledEX,ledEY);
+//                            if(G_LED_WIDTH.get(0, 0, key).getDataSize()>nLedSkip) G_LED_WIDTH_SELECT.get(0, 0, key).add(ledX,ledY,ledEX,ledEY); 
                             ledEvent[key]   = nProcessed;
                             ledCharge[key]  = ledCH;
                             ledCharge2[key] = ledCH*ledCH;
                             ledAmpli[key]   = ledAM;
                             ledAmpli2[key]  = ledAM*ledAM;
+                            ledWidth[key]   = ledFW;
+                            ledWidth2[key]  = ledFW*ledFW;
                             ledNEvents[key] = 1;
                         }
                         else {
@@ -887,6 +974,8 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                             ledCharge2[key] += ledCH*ledCH;
                             ledAmpli[key]   += ledAM;
                             ledAmpli2[key]  += ledAM*ledAM;
+                            ledWidth[key]   += ledFW;
+                            ledWidth2[key]  += ledFW*ledFW;
                             ledNEvents[key]++;
                         }
                     }
@@ -949,6 +1038,7 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                 noiseRMS[crystalPointers[key]]     = H_NOISE.get(0, 0, key).getMean();
                 timeCross[crystalPointers[key]]    = H_LED_TCROSS.get(0, 0, key).getMean();
                 timeHalf[crystalPointers[key]]     = H_LED_THALF.get(0, 0, key).getMean();
+                fullWidthHM[crystalPointers[key]]  = H_LED_WIDTH.get(0, 0, key).getMean();
             }
         }
         GraphErrors  G_PED = new GraphErrors(crystalID,pedestalMEAN);
@@ -1027,6 +1117,37 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
         }
         canvasAmpli.cd(3);
         canvasAmpli.draw(G_LED_AMPLI_SELECT.get(0, 0, keySelect));
+        // Width
+        GraphErrors  G_WIDTH = new GraphErrors(crystalID,fullWidthHM);
+        G_WIDTH.setTitle(" "); //  title
+        G_WIDTH.setXTitle("Crystal ID"); // X axis title
+        G_WIDTH.setYTitle("FWHM (ns)");   // Y axis title
+        G_WIDTH.setMarkerColor(2); // color from 0-9 for given palette
+        G_WIDTH.setMarkerSize(5); // size in points on the screen
+        G_WIDTH.setMarkerStyle(1); // Style can be 1 or 2
+        canvasWidth.cd(0);
+        if (H_LED_fADC.hasEntry(0, 0, keySelect)) {
+            if(H_LED_N.getBinContent(keySelect)>0) {
+                hfADC = H_LED_fADC.get(0, 0, keySelect).histClone(" ");
+                hfADC.normalize(H_LED_N.getBinContent(keySelect));
+            }
+            else {
+                hfADC= new H1D("fADC", 100, 0.0, 100.0);
+            }
+            hfADC.setFillColor(3);
+            hfADC.setXTitle("fADC Sample");
+            hfADC.setYTitle("fADC Counts");
+            canvasWidth.draw(hfADC);               
+        }
+        canvasWidth.cd(1); 
+        canvasWidth.draw(G_WIDTH);
+        canvasWidth.cd(2);
+        if(H_LED_WIDTH.hasEntry(0, 0, keySelect)) {
+            H1D hwidth = H_LED_WIDTH.get(0, 0, keySelect);
+            canvasWidth.draw(hwidth,"S");
+        }        
+        canvasWidth.cd(3);
+        canvasWidth.draw(G_LED_WIDTH.get(0, 0, keySelect));
         // Time
         GraphErrors  G_TCROSS = new GraphErrors(crystalID,timeCross);
         G_TCROSS.setTitle(" "); //  title
@@ -1092,8 +1213,8 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                  }*/
                 //            shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
                 if (nent > 0) {
-                    if (this.H_NOISE.get(sector, layer, paddle).getMean() > 1.0
-                     && this.H_NOISE.get(sector, layer, paddle).getMean() < 1.55) {
+                    if (this.H_NOISE.get(sector, layer, paddle).getMean() > 0.75
+                     && this.H_NOISE.get(sector, layer, paddle).getMean() < 1.05) {
                         shape.setColor(0, 145, 0);
                     } else if (this.H_NOISE.get(sector, layer, paddle).getMean() < 1.0) {
                         shape.setColor(0, 0, 100);
@@ -1107,8 +1228,8 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
         }
         else if(plotSelect==2 || plotSelect==3) {
             if (this.H_LED_CHARGE.hasEntry(sector, layer, paddle)) {
-                if(plotSelect==2 || plotSelect==3) {
-                    int nent = this.H_LED_CHARGE.get(sector, layer, paddle).getEntries();
+                if(plotSelect==2) {
+                    int nent = (int) this.H_LED_N.getBinContent(paddle);
                     Color col = palette.getColor3D(nent, nProcessed, true);           
                     /*int colorRed = 240;
                  if(nProcessed!=0){
@@ -1117,20 +1238,29 @@ public class FTCALled implements IDetectorListener,IHashTableListener,ActionList
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
                 }
                 else if(plotSelect==3){
-                    double lmean = this.mylandau.get(sector, layer, paddle).getParameter(1);
-                    Color col = palette.getColor3D(lmean, 80., true);           
+                    double lmean = this.H_LED_VMAX.get(sector, layer, paddle).getMean();
+                    if(G_LED_AMPLI.get(sector, layer, paddle).getDataSize()>0) 
+                        lmean = G_LED_AMPLI.get(sector, layer, paddle).getDataY(G_LED_AMPLI.get(sector, layer, paddle).getDataSize()-1);
+                    Color col = palette.getColor3D(lmean, 1000., true);           
                     shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
                 }
             }
         }
         else if(plotSelect==4) {
+            if (this.H_LED_WIDTH.hasEntry(sector, layer, paddle)) {
+                double lmean = this.H_LED_WIDTH.get(sector, layer, paddle).getMean();
+                Color col = palette.getColor3D(lmean, 100., true); 
+                shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+            }
+        }
+        else if(plotSelect==5) {
             if (this.H_LED_THALF.hasEntry(sector, layer, paddle)) {
                 int nent = this.H_LED_THALF.get(sector, layer, paddle).getEntries();
                 Color col = palette.getColor3D(nent, nProcessed, true); 
                 shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
             }
         }
-        else if(plotSelect==5) {
+        else if(plotSelect==6) {
 
         }
     }
