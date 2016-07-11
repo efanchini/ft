@@ -92,16 +92,18 @@ public class FTCALDetector extends FTDetector {
         for (int component : this.getDetectorComponents()) {
             int ix = this.getIdX(component);
             int iy = this.getIdY(component);
-            if(ix!=-9) {
-                thresholds.add(0, 0, component, threshold);
-            }
-            else if(ix==-9) {
-//                    if     (iy==-6 || iy==-5 || iy==-4 || iy==-3 || iy==-2 || iy==-1) thresholdValue.add(0, 0, component, threshold/3.);     
-//                    else if(iy== 6 ||           iy==4  || iy==3  || iy==2  || iy==1 ) thresholdValue.add(0, 0, component, threshold/2.);
-//                    else                                                              thresholdValue.add(0, 0, component, threshold);
-                if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholds.add(0, 0, component, threshold);
-                else                                       thresholds.add(0, 0, component, threshold/3.);
-            }
+            thresholds.add(0, 0, component, threshold);// for runs Run>692
+            // For runs 487(?)>Run<=691 from here 1)
+//            if(ix!=-9) {
+//                thresholds.add(0, 0, component, threshold);
+//            }
+//            else if(ix==-9) {
+////                    if     (iy==-6 || iy==-5 || iy==-4 || iy==-3 || iy==-2 || iy==-1) thresholdValue.add(0, 0, component, threshold/3.);     
+////                    else if(iy== 6 ||           iy==4  || iy==3  || iy==2  || iy==1 ) thresholdValue.add(0, 0, component, threshold/2.);
+////                    else                                                              thresholdValue.add(0, 0, component, threshold);
+//                if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholds.add(0, 0, component, threshold);
+//                else                                       thresholds.add(0, 0, component, threshold/3.);
+//            }// to here 1)
         }
     }
     

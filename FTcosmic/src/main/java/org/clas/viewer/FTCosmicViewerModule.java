@@ -99,13 +99,9 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     }
 
     
-    
-    
-    
     public void processEvent(DataEvent de) {
         EvioDataEvent event = (EvioDataEvent) de;
 
-        
         decoder.decode(event);
         nProcessed++;
         

@@ -42,7 +42,8 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         this.getParameter(0).setRanges(0.0,0.0,1.0,1.0);
         this.getParameter(1).setRanges(100.,300.,1.0,400.0);
         this.getParameter(2).setRanges(0.0,10.0,10.0,10.0);
-        this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);
+        //this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);//old preamps
+        this.getParameter(3).setRanges(0.7,1.05,1.0,2.0);
         this.initCollections();
     }
 

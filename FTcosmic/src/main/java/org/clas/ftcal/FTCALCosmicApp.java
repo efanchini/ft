@@ -6,7 +6,7 @@
 package org.clas.ftcal;
 
 import java.awt.Color;
-import static java.lang.Math.max;
+import java.util.ArrayList;
 import java.util.List;
 import org.clas.tools.CustomizeFit;
 import org.clas.tools.FTApplication;
@@ -47,7 +47,7 @@ public class FTCALCosmicApp extends FTApplication {
     double[] timeCROSS;
     double[] timeHALF;
     String compcanvas="";
-
+    private int CosmicSelectionType=1;// da cambiare
     
     // decoder related information
     int nProcessed = 0;
@@ -55,10 +55,12 @@ public class FTCALCosmicApp extends FTApplication {
     // analysis realted info
     double nsPerSample=4;
     double LSB = 0.4884;
-    int ncry_cosmic = 4;        // number of crystals above threshold in a column for cosmics selection
-
+    int ncry_cosmic = 4;  // Horizonthal selection // number of crystals above threshold in a column for cosmics selection
+    double clusterThr = 50;// Vertical selection
+    double singleChThr = 20;// Single channel selection
     CustomizeFit cfit = new CustomizeFit();
-    
+    FTCalCosmicSelection cosmicsel;
+    private ArrayList selOpt;
     
     public FTCALCosmicApp(FTDetector d) {
         super(d);
@@ -69,23 +71,96 @@ public class FTCALCosmicApp extends FTApplication {
         this.getCanvas("Time").divideCanvas(2, 2);
         this.addFields("Occupancy", "<E>", "\u03C3(E)", "\u03C7\u00B2(E)", "<T>", "\u03C3(T)");
         this.getParameter(0).setRanges(0.,1000000.,1.,1000000.);
-        this.getParameter(1).setRanges(5.,25.,10.,50.);
-        this.getParameter(2).setRanges(0.,10.,10.,10.);
-        this.getParameter(3).setRanges(0.,2.,10.,5.);
-        this.getParameter(4).setRanges(0.,50.,10.,50.);
-        this.getParameter(5).setRanges(0.,5.,10.,5.);
+        this.getParameter(1).setRanges(5.0,45.0,10.0,53.0);///Range Charge
+        this.getParameter(2).setRanges(0.0,10.0,10.0,10.0);
+        this.getParameter(3).setRanges(0.0,2.0,10.0,5.0);
+        this.getParameter(4).setRanges(0.0,50.0,10.0,50.0);
+        this.getParameter(5).setRanges(0.0,5.0,10.0,5.0);
         this.initCollections();
+
     }
 
-   
+    private void selInfo(){
+       switch (CosmicSelectionType) {
+            case 0:
+                // Cosmic Horizonthal
+                System.out.println("Cosmic event selection set: Horizontal => N.chfired: "+this.ncry_cosmic+" Thr: "+this.singleChThr);
+                break;
+            case 1:
+                // Cosmic Vertical
+                System.out.println("Cosmic event selection set: Vertical => ThrCh: "+this.singleChThr+" ThrCluster: "+this.clusterThr);
+                break;
+            case 2:
+                // Single Signal Above Threshold
+                System.out.println("Cosmic event selection set: Single signal above threshold => ThrCh: "+this.singleChThr);
+                break;
+            case 3:
+                // Test
+                System.out.println("Cosmic event selection set: Test");
+                break;
+       }
+    }
+    
+    public void LoadSelection(ArrayList arl) {
+        this.selOpt=arl;
+       this.CosmicSelectionType = (Integer)this.selOpt.get(0);
+        switch (CosmicSelectionType) {
+            case 0:
+                // Cosmic Horizonthal
+                this.ncry_cosmic = (Integer)this.selOpt.get(1);
+                this.singleChThr = (Integer)this.selOpt.get(2);
+                break;
+            case 1:
+                // Cosmic Vertical
+                this.singleChThr = (Integer)this.selOpt.get(1);
+                this.clusterThr = (Integer)this.selOpt.get(2);
+                break;
+            case 2:
+                // Single Signal Above Threshold
+                this.singleChThr = (Integer)this.selOpt.get(1);
+                break;
+        }
+       
+   }
+    
+  public Object getDefaultSelPar(int seltype, int npar) {
+        Object objout= null;
+        switch (seltype) {
+            case 0:
+                // Cosmic Horizonthal
+                if(npar==1)objout=this.ncry_cosmic;
+                else if(npar==2)objout=this.singleChThr;
+                else objout=-1;
+                break;
+            case 1:
+                // Cosmic Vertical
+                if(npar==1)objout=this.singleChThr;
+                else if(npar==2)objout=this.clusterThr;
+                else objout=-1;
+                break;
+            case 2:
+                // Single Signal Above Threshold
+                if(npar==1)objout=this.singleChThr;
+                else objout=-1;
+                break;
+        }
+        return objout;
+       
+   }
     private void initCollections() {
         H_fADC          = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0),"H_fADC");
         H_COSMIC_fADC   = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0),"fADC Sample","fADC Counts",3,"H_COSMIC_fADC");
-        H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 80, 0.0, 40.0),"Charge (pC)","Counts",2,"H_COSMIC_CHARGE");
-        H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax",   80, 0.0, 40.0), "Amplitude (mV)", "Counts", 2,"H_COSMIC_VMAX");
+        if(this.CosmicSelectionType==0){
+            H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 120, -2.0, 40.0),"Charge (pC)","Counts",2,"H_COSMIC_CHARGE");
+            H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax",   120, -2.0, 40.0), "Amplitude (mV)", "Counts", 2,"H_COSMIC_VMAX");
+            F_ChargeLandau  = this.getData().addCollection(new F1D("landau", 0.0, 40.0),"Landau","F_ChargeLandau");
+        }else{
+            H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 150, 0.0, 150.0),"Charge (pC)","Counts",2,"H_COSMIC_CHARGE");
+            H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax",   150, 0.0, 150.0), "Amplitude (mV)", "Counts", 2,"H_COSMIC_VMAX");
+            F_ChargeLandau  = this.getData().addCollection(new F1D("landau", 0.0, 130.0),"Landau","F_ChargeLandau");
+        }
         H_COSMIC_TCROSS = this.getData().addCollection(new H1D("T_TRIG", 80, -20.0, 60.0), "Time (ns)", "Counts", 5, "H_COSMIC_TCROSS");
         H_COSMIC_THALF  = this.getData().addCollection(new H1D("T_HALF", 80, -20.0, 60.0), "Time (ns)", "Counts", 5,"H_COSMIC_THALF");
-        F_ChargeLandau  = this.getData().addCollection(new F1D("landau", 0.0, 40.0),"Landau","F_ChargeLandau");
         F_TimeGauss     = this.getData().addCollection(new F1D("gaus", -20.0, 60.0),"Time","F_ChargeLandau");
         H_fADC_N       = new H1D("fADC"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_COSMIC_N     = new H1D("EVENT" , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
@@ -100,9 +175,25 @@ public class FTCALCosmicApp extends FTApplication {
         for(int i=0; i< this.getDetector().getNComponents(); i++) {
             detectorIDs[i]=this.getDetector().getIDArray()[i]; 
         }
-        
+        cosmicsel = new FTCalCosmicSelection(this.getDetector());
     }
 
+    public void reloadCollections(){
+        H_COSMIC_CHARGE.clear();
+        H_COSMIC_VMAX.clear();
+        F_ChargeLandau.clear();
+        if(this.CosmicSelectionType==0){
+            H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 120, -2.0, 40.0),"Charge (pC)","Counts",2,"H_COSMIC_CHARGE");
+            H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax",   120, -2.0, 40.0), "Amplitude (mV)", "Counts", 2,"H_COSMIC_VMAX");
+            F_ChargeLandau  = this.getData().addCollection(new F1D("landau", 0.0, 40.0),"Landau","F_ChargeLandau");
+        }else{
+            H_COSMIC_CHARGE = this.getData().addCollection(new H1D("Charge", 150, 0.0, 150.0),"Charge (pC)","Counts",2,"H_COSMIC_CHARGE");
+            H_COSMIC_VMAX   = this.getData().addCollection(new H1D("VMax",   150, 0.0, 150.0), "Amplitude (mV)", "Counts", 2,"H_COSMIC_VMAX");
+            F_ChargeLandau  = this.getData().addCollection(new F1D("landau", 0.0, 130.0),"Landau","F_ChargeLandau");
+        }
+    }
+    
+    
     @Override
     public void resetCollections() {
         for (int component : this.getDetector().getDetectorComponents()) {
@@ -122,7 +213,54 @@ public class FTCALCosmicApp extends FTApplication {
         H_TIME_SIGMA.reset();
     }
     
-    private void initLandauFitPar(int key) {
+    
+    public void initLandauFitPar(int key) {
+        // Initialize functiojn for cosmic runs in vertical position and with high thresholds //
+        H1D hcosmic = H_COSMIC_CHARGE.get(0,0,key);
+        int firstbin = 0;
+        int filledbin=0;
+        double binmax = hcosmic.getXaxis().getNBins();
+        int nbins=0;
+        double meanv=0.0;
+        int startfit =0;
+        for(int i=0; i<binmax; i++){
+            if(hcosmic.getBinContent(i)!=0 && filledbin==0){
+               firstbin=i;
+               if((i+20)<=hcosmic.getXaxis().getNBins())binmax=i+20;
+               filledbin++; 
+            }
+            if(firstbin!=0 && i>=firstbin){
+                meanv+=hcosmic.getBinContent(i);
+                nbins++;
+            }
+        }
+            meanv=meanv/nbins;
+            for(int i=firstbin; i<binmax; i++){
+                if(hcosmic.getBinContent(i)>meanv){
+                    startfit=i;
+                    break;
+                }
+            }     
+        double mlMin=hcosmic.getAxis().getBin(startfit);
+        double mlMax=hcosmic.getAxis().max();
+        F1D ff;
+        
+        ff = new F1D("landau+exp", mlMin, mlMax);
+        ff.setName("Landau_"+key);
+        this.F_ChargeLandau.add(0, 0, key, ff);
+        F_ChargeLandau.get(0, 0, key).setParameter(0, hcosmic.getBinContent(hcosmic.getMaximumBin()));
+        F_ChargeLandau.get(0, 0, key).setParLimits(0, 0.0, 10000000.); 
+        F_ChargeLandau.get(0, 0, key).setParameter(1,hcosmic.getMean());
+        F_ChargeLandau.get(0, 0, key).setParLimits(1, startfit, 80.0);//Changed from 5-30        
+        F_ChargeLandau.get(0, 0, key).setParameter(2, 2.0);//Changed from 2
+        F_ChargeLandau.get(0, 0, key).setParLimits(2, 0.3, 5.0);//Changed from 0.5-10
+        F_ChargeLandau.get(0, 0, key).setParameter(3,mlMin);
+        F_ChargeLandau.get(0, 0, key).setParLimits(3,mlMin-2.0, 10000000.0); 
+        F_ChargeLandau.get(0, 0, key).setParameter(4, -0.1);//Changed from -0.2
+        F_ChargeLandau.get(0, 0, key).setParLimits(4, -1.5, 0.0); //Changed from -10-0
+    }
+    
+    private void initLandauFitParHorizonthal(int key) {
         H1D hcosmic = H_COSMIC_CHARGE.get(0,0,key);
         double mlMin=hcosmic.getAxis().min();
         double mlMax=hcosmic.getAxis().max();
@@ -147,7 +285,7 @@ public class FTCALCosmicApp extends FTApplication {
         }
         F_ChargeLandau.get(0, 0, key).setParLimits(0, 0.0, 10000000.0); 
         F_ChargeLandau.get(0, 0, key).setParameter(1,hcosmic.getMean());
-        F_ChargeLandau.get(0, 0, key).setParLimits(1, 4.0, 30.);//Changed from 5-30        
+        F_ChargeLandau.get(0, 0, key).setParLimits(1, 4.0, 30.0);//Changed from 5-30        
         F_ChargeLandau.get(0, 0, key).setParameter(2,1.6);//Changed from 2
         F_ChargeLandau.get(0, 0, key).setParLimits(2, 0.3, 5);//Changed from 0.5-10
         if(hcosmic.getBinContent(0)!=0) {
@@ -162,7 +300,11 @@ public class FTCALCosmicApp extends FTApplication {
     private void fitLandau(int key) {
         H1D hcosmic = H_COSMIC_CHARGE.get(0,0,key);
         String name = F_ChargeLandau.get(0, 0, key).getName();
-        if(name.indexOf("New_")==-1)initLandauFitPar(key);
+        if(name.indexOf("New_")==-1){
+            if(this.CosmicSelectionType==0)initLandauFitParHorizonthal(key);
+            else initLandauFitPar(key);
+            //initLandauFitParHorizonthal(int key); // Cosmic data in orizonthal position or with old preamps
+        }
         hcosmic.fit(F_ChargeLandau.get(0, 0, key),"LQ");
         this.updateChargeFitResults(key);
         
@@ -206,7 +348,6 @@ public class FTCALCosmicApp extends FTApplication {
         }     
         if(this.getCanvasSelect() == "Energy" && this.compcanvas!="Comparison") this.fitBook(H_COSMIC_CHARGE,F_ChargeLandau);
         else if(this.getCanvasSelect() == "Time")   this.fitBook(H_COSMIC_THALF,F_TimeGauss);
-        
     }
     
      public void fitFastCollections() {
@@ -256,9 +397,12 @@ public class FTCALCosmicApp extends FTApplication {
             this.updateChargeFitResults(key);
         }
     }
+  
 
     public void addEvent(List<DetectorCounter> counters) { 
+        
         nProcessed++;
+        if(nProcessed==1)selInfo();
         H1D H_WMAX = new H1D("WMAX",this.getDetector().getComponentMaxCount(),0.,this.getDetector().getComponentMaxCount());
         H_WMAX.reset();
         double tPMTCross=0;
@@ -266,7 +410,8 @@ public class FTCALCosmicApp extends FTApplication {
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
             if(this.getDetector().hasComponent(key)) {
-                this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));                
+                this.getFitter().fit(counter.getChannels().get(0),this.singleChThr);
+                //this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key)); //old               
                 H_fADC_N.fill(key);
                 short pulse[] = counter.getChannels().get(0).getPulse();
                 for (int i = 0; i < Math.min(pulse.length, H_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
@@ -280,36 +425,39 @@ public class FTCALCosmicApp extends FTApplication {
             }
         }
         
+       Boolean largeEvtsel = false;
+       largeEvtsel=this.cosmicsel.LargeEventRemoval(counters, H_WMAX,this.getFitter(), this.singleChThr);
+       if(!largeEvtsel){
+           //if(largeEvtsel){
+               //System.out.println("Large event: "+nProcessed);
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
             if(this.getDetector().hasComponent(key)) {
-                int ix  = this.getDetector().getIX(key);
-                int iy  = this.getDetector().getIY(key);
-                int nCrystalInColumn = 0;
-                this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
-                int i1=(int) max(0,iy-ncry_cosmic);    // allowing for +/- to cope with dead channels
-                int i2=iy+ncry_cosmic;
-                for(int i=i1; i<=i2; i++) {
-                    int component = this.getDetector().getComponent(ix, i);
-                    if(i!=iy && this.getDetector().hasComponent(component)) {
-                        if(H_WMAX.getBinContent(component)>this.getDetector().getThresholds().get(0, 0, component) ) nCrystalInColumn++;                    
-                    }
-                }
-                if(nCrystalInColumn>=ncry_cosmic) {
+                Boolean sel = false;
+                //sel = this.cosmicsel.VerticalCosmicSel(counter, key, H_WMAX, this.getFitter(), this.clusterThr);// vertical position ch>thr
+                if(CosmicSelectionType==0)sel = this.cosmicsel.HorizonthalSel(counter, key, ncry_cosmic, H_WMAX, this.getFitter(), this.singleChThr); //Horizonthal position
+                if(CosmicSelectionType==1)sel = this.cosmicsel.VerticalCosmicSel(counter, key, H_WMAX, this.getFitter(), this.clusterThr, this.singleChThr);// vertical position ch>thr
+                if(CosmicSelectionType==2)sel = this.cosmicsel.SignalAboveThrSel(counter, key, H_WMAX, this.getFitter(), this.singleChThr);
+                if(CosmicSelectionType==3)sel = this.cosmicsel.TestSel(counter, key, H_WMAX, H_COSMIC_fADC, this.getFitter(),nProcessed, this.singleChThr);
+                //sel = true;//Da togliere
+                if(sel==true){
+                    
                     short pulse[] = counter.getChannels().get(0).getPulse();
                     H_COSMIC_N.fill(key);
                     for (int i = 0; i < Math.min(pulse.length, H_COSMIC_fADC.get(0, 0, key).getAxis().getNBins()); i++) {
                         H_COSMIC_fADC.get(0, 0, key).fill(i, pulse[i]-this.getFitter().getPedestal() + 10.0);                
                     }
+                   
                     double charge=(counter.getChannels().get(0).getADC().get(0)*LSB*nsPerSample/50);
-                    
                     H_COSMIC_CHARGE.get(0, 0, key).fill(charge);
                     H_COSMIC_VMAX.get(0, 0, key).fill((this.getFitter().getWave_Max()-this.getFitter().getPedestal())*LSB);
                     H_COSMIC_TCROSS.get(0, 0, key).fill(this.getFitter().getTime(3)-tPMTCross);
-                    H_COSMIC_THALF.get(0, 0, key).fill(this.getFitter().getTime(7)-tPMTHalf);                
-                }
+                    H_COSMIC_THALF.get(0, 0, key).fill(this.getFitter().getTime(7)-tPMTHalf);             
+                }  
             }
-        }
+         }
+       }// Large events removal
+        
     }
     
     public void updateCanvas(int keySelect) {
@@ -441,4 +589,7 @@ public class FTCALCosmicApp extends FTApplication {
         histofile.addToMap("Time_fct", this.F_TimeGauss);
         histofile.addToMap("Fadc_Cosmic", this.H_COSMIC_fADC);
     }
+    
+    
+    
 }

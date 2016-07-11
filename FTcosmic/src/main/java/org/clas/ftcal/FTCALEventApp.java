@@ -56,6 +56,7 @@ public class FTCALEventApp extends FTApplication {
 //                    this.getFitter().fitException(counter.getChannels().get(0), 4, 24, 60, 120);
 //                }
 //                else this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
+
                 this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));                
                 for (int i = 0; i < Math.min(pulse.length, H_WAVE.get(0, 0, key).getAxis().getNBins()); i++) {
                     H_WAVE.get(0, 0, key).fill(i, pulse[i]);

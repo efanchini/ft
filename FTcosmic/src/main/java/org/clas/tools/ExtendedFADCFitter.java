@@ -69,6 +69,7 @@ public class ExtendedFADCFitter implements IFADCFitter {
     }
 
     public void fit(DetectorChannel dc) {
+        //System.out.println("Erica caspiterina0");
         short[] pulse = dc.getPulse();
         double ped    = 0.0;
         double noise  = 0;
@@ -80,12 +81,14 @@ public class ExtendedFADCFitter implements IFADCFitter {
             ped += pulse[bin];
             noise += pulse[bin] * pulse[bin];
         }
+        //System.out.println("Erica caspiterina1");
         pedestal = ped / (ped_i2 - ped_i1);
         rms = LSB * Math.sqrt(noise / (ped_i2 - ped_i1) - pedestal * pedestal);
         // determine waveform max
         for (int bin=0; bin<pulse.length; bin++) {
             if(pulse[bin]>wmax) wmax=pulse[bin];
         }
+        //System.out.println("Erica caspiterina2");
         wave_max=wmax;
         // find threshold crossing in pulse region: this determines mode-3 time (4 ns resolution)
         for (int bin=pul_i1; bin<pul_i2; bin++) {
@@ -94,6 +97,7 @@ public class ExtendedFADCFitter implements IFADCFitter {
                 break;
             }
         }
+        //System.out.println("Erica caspiterina3");
         thresholdCrossing=tcross;
         time_3=tcross*nsPerSample;
         // find pulse max
@@ -103,6 +107,8 @@ public class ExtendedFADCFitter implements IFADCFitter {
                 break; 
             }
         }
+        //System.out.println("Erica caspiterina4");
+        
         // calculating high resolution time    
         double halfMax = (pmax+pedestal)/2;
         time_7 = time_3;
@@ -123,6 +129,7 @@ public class ExtendedFADCFitter implements IFADCFitter {
                 time_7 = ((halfMax - a0)/(a1-a0) + t0)* nsPerSample;
             }
         }
+        //System.out.println("Erica caspiterina55555555555");
    }
     
 //    public void fitException(DetectorChannel dc, int ped_i, int ped_f, int pul_i, int pul_f) {
@@ -184,6 +191,7 @@ public class ExtendedFADCFitter implements IFADCFitter {
 //   }
     
     public void fit(DetectorChannel dc, double t) {
+        
         this.setThreshold(t);
         this.fit(dc);
     }

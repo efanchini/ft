@@ -3,20 +3,29 @@ package org.clas.ftcal;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
+import javax.swing.SpringLayout;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -37,6 +46,7 @@ import org.clas.tools.FitParametersFile;
 import org.clas.tools.HipoFile;
 import org.clas.tools.Miscellaneous;
 import org.clas.tools.NoGridCanvas;
+import org.root.group.SpringUtilities;
 
 
 
@@ -70,6 +80,8 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     int nProcessed = 0;
     EventDecoder decoder;
     ExtendedFADCFitter eFADCFitter = new ExtendedFADCFitter();
+    private ArrayList parSelection = new ArrayList();;
+    double threshold = 20; // 10 fADC value <-> ~ 5mV
    
 
     public EventDecoder getDecoder() {
@@ -81,24 +93,40 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     }
     
     // analysis parameters
-    double threshold = 12; // 10 fADC value <-> ~ 5mV
+    
+//    // Old preamp Runs Run<=Run691 //
+//    double threshold = 12; // 10 fADC value <-> ~ 5mV
+//    int ped_i1 = 4;
+//    int ped_i2 = 24;
+//    int pul_i1 = 30;
+//    int pul_i2 = 70;
+     // NEW Preamp Run>=692 || Run>=898//
+    
     int ped_i1 = 4;
     int ped_i2 = 24;
-    int pul_i1 = 30;
-    int pul_i2 = 70;
+    int pul_i1 = 45;
+    int pul_i2 = 85;
+    //int pul_i1 = 70;//run714
+    //int pul_i2 = 99;//run714
+//     // NEW Preamp Run>=863 && Run<=890//
+//    double threshold = 50; // 10 fADC value <-> ~ 5mV
+//    int ped_i1 = 2;
+//    int ped_i2 = 20;
+//    int pul_i1 = 20;
+//    int pul_i2 = 60;   
 
     // control variables
     private String canvasSelect = "Event";  
     private int    keySelect = 8;
     private int[]  keyToRow  = null;
+    JButton cosmicSelBtn;
 
     
     
     public FTCALCosmic(){
         this.detectorPanel=null;
-        this.decoder=null;
+        this.decoder=null;  
     }
-
 
     public JPanel getDetectorPanel() {
         return detectorPanel;
@@ -109,21 +137,20 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     }
     
     public void initApps() {
+        
         // event
         ftEvent = new FTCALEventApp(viewFTCAL);
         ftEvent.setFitter(eFADCFitter);
         // noise
         ftNoise = new FTCALNoiseApp(viewFTCAL);
         ftNoise.setFitter(eFADCFitter);
-        // cosmic
+        // cosmic  
         ftCosmic = new FTCALCosmicApp(viewFTCAL);
         ftCosmic.setFitter(eFADCFitter);
         //Comparison
         ftCompare = new FTCALCompareApp(viewFTCAL);
         ftCompare.setFitter(eFADCFitter);
-        
-       
-        
+
     }
 
     public void initPanel() {
@@ -151,6 +178,10 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
 
         JPanel buttonPane = new JPanel();
         buttonPane.setLayout(new FlowLayout());
+        cosmicSelBtn = new JButton("Cosmic Selection");
+        cosmicSelBtn.setBackground(Color.RED);
+        cosmicSelBtn.addActionListener(this);
+        buttonPane.add(cosmicSelBtn);
         JButton resetBtn = new JButton("Clear Histograms");
         resetBtn.addActionListener(this);
         buttonPane.add(resetBtn);
@@ -183,6 +214,9 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
  
         this.detectorPanel.add(splitPane, BorderLayout.CENTER);
         this.ftCosmic.fitFastCollections();
+        
+        //this.TabbedPaneDemo();
+        
     }
 
 
@@ -218,6 +252,11 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     public void actionPerformed(ActionEvent e) {
         // TODO Auto-generated method stub
         System.out.println("FTCALViewerModule ACTION = " + e.getActionCommand());
+        
+        if (e.getActionCommand().compareTo("Cosmic Selection") == 0) {
+           this.TabbedPaneDemo();
+            
+        }
         if (e.getActionCommand().compareTo("Clear Histograms") == 0) {
             this.resetHistograms();
             
@@ -265,6 +304,8 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         this.ftNoise.resetCollections();
         this.ftCosmic.resetCollections();
         this.ftCompare.resetCollections();
+        this.resetCosmicSel();
+        
     }
         
     public void initDecoder() {
@@ -281,7 +322,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     public void processDecodedEvent() {
         
         nProcessed++;
-
+        if(nProcessed>0)freezeCosmicSel();
         List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
         this.ftEvent.addEvent(counters);
         this.ftNoise.addEvent(counters);
@@ -417,5 +458,126 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
         histofile.writeHipoFile(filename);
         //histofile.browsFile(hipoFileName);
    }
+   
+   
+   public void TabbedPaneDemo() { 
+ 
+        JFrame TabbedPaneDemo = new JFrame();
+        TabbedPaneDemo.setBounds(10, 10, 400, 180);
+        JTabbedPane tabbedPane = new JTabbedPane();
+      
+            
+        String[] text1 = new String[2];
+        text1[0]="N.Ch fired:";
+        text1[1]="Signal Thrd (fadc ch):";
+        CustomPanel cp1 = new CustomPanel(text1.length, text1);
+        tabbedPane.addTab("FTCal Horizontal", cp1);
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_1);
+        
+        String[] text2 = new String[2];
+        text2[0]="Signal Thrd (fadc ch):";
+        text2[1]="Cluster Thrd (fadc ch):";
+        CustomPanel cp2 = new CustomPanel(text2.length, text2);
+        tabbedPane.addTab("FTCal Vertical", cp2);
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_2);
+        
+        String[] text3 = new String[1];
+        text3[0]="Signal Thrd (fadc ch):";
+        CustomPanel cp3 = new CustomPanel(text3.length, text3);
+        tabbedPane.addTab("FTCal Signal Thr", cp3);
+        tabbedPane.setMnemonicAt(0, KeyEvent.VK_3);
+        
+//        String[] text4 = new String[4];
+//        text4[0]="Par0";
+//        text4[1]="Par1";
+//        text4[2]="Par2";
+//        text4[3]="Par3";
+//        CustomPanel cp4 = new CustomPanel(text4.length, text4);
+//        tabbedPane.addTab("Test", cp4);
+//        tabbedPane.setMnemonicAt(0, KeyEvent.VK_4); 
+ 
+        //Add the tabbed pane to this panel.
+        TabbedPaneDemo.add(tabbedPane);
+         
+        //The following line enables to use scrolling tabs.
+        tabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
+        
+        TabbedPaneDemo.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        TabbedPaneDemo.setVisible(true);
+    }
 
+    private class CustomPanel extends JPanel implements ActionListener{  
+	JTextField[] params = new JTextField[100];
+        private int nPar =0;
+	private CustomPanel(int npar, String[] text){
+            this.setLayout(new SpringLayout());
+            this.nPar=npar;
+            //this.setSize(10000, 500);
+            for (int i = 0; i < npar; i++) {  
+                params[i] = new JTextField(1);
+                JLabel l = new JLabel(text[i], JLabel.TRAILING);
+                this.add(l);
+                this.add(params[i]);
+            }
+            JButton bclear = new JButton("Clear");
+            this.add(bclear);
+            bclear.addActionListener(this);
+            
+            JButton bsave = new JButton("Ok");
+            this.add(bsave);
+            bsave.addActionListener(this);
+            
+            SpringUtilities.makeCompactGrid(this,
+                                        npar+1, 2,  //rows, cols
+                                        6, 6,        //initX, initY
+                                        50, 10);       //xPad, yPad
+	}
+
+        public void actionPerformed(ActionEvent e) {
+            if(e.getActionCommand().compareTo("Ok")==0){
+                JButton g =(JButton) e.getSource();
+                JPanel p =(JPanel) g.getParent();
+                JTabbedPane t =(JTabbedPane)p.getParent();
+                int tabselected = t.getSelectedIndex();
+                ArrayList pp = new ArrayList();
+                pp.add(tabselected);
+                for(int i=0; i<this.nPar; i++){  
+                    if(params[i].getText().isEmpty()){
+                        // default values //
+                        pp.add(ftCosmic.getDefaultSelPar(tabselected, i));
+                    }
+                    else {
+                        pp.add(Integer.parseInt(params[i].getText()));
+                    }
+                }   
+               
+                ftCosmic.LoadSelection(pp);
+                ftCosmic.reloadCollections();
+                cosmicSelBtn.setBackground(Color.GREEN);
+                for( ActionListener al : cosmicSelBtn.getActionListeners() ) {
+                        cosmicSelBtn.removeActionListener( al );
+                 }
+                JFrame frame = (JFrame)SwingUtilities.getRoot((Component) e.getSource());
+                frame.dispose();
+            }
+            if(e.getActionCommand().compareTo("Clear")==0){
+                for (int i = 0; i < this.nPar; i++) {
+                    params[i].setText("");
+                }
+                
+            }
+        }
+       
+    }
+    
+  private void resetCosmicSel(){
+            //clear all values stored
+            cosmicSelBtn.addActionListener(this);
+            cosmicSelBtn.setBackground(Color.RED);
+        }
+  
+  private void freezeCosmicSel(){
+        cosmicSelBtn.removeActionListener(this);
+        cosmicSelBtn.setBackground(Color.GREEN);
+  }
 }
