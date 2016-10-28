@@ -33,6 +33,12 @@ public class FTCalCosmicSelection extends FTApplication{
        int nCrystalInColumn = 0;
        //System.out.println("Erica: "+counter.getChannels().get(0)+"  "+this.getDetector().getThresholds().get(0, 0, key));
        //fitter.fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
+       //only for runs 714 -717 -718 //
+//      if(key==9 || key==10 || key==31 || key==32|| key==53||key==54 ||key==75||key==76||key==97
+//              || key==98||key==118||key==119||key==120||key==140||key==141){
+//         fitter.setPulseRange(65, 100);
+//        
+//      }
        fitter.fit(counter.getChannels().get(0),singleChThr);
        int i1=(int) max(0,iy-ncry_cosmic);    // allowing for +/- to cope with dead channels
        int i2=iy+ncry_cosmic;
@@ -62,7 +68,7 @@ public class FTCalCosmicSelection extends FTApplication{
     }
     
     public Boolean VerticalCosmicSel(DetectorCounter counter, int key, H1D H_WMAX, ExtendedFADCFitter fitter, double clusterThr, double singleChThr){
-       //System.out.println("VerticalCosmicSel "+singleChThr+" "+clusterThr);
+       
        Boolean flagsel=false;
        // Looks for cluster events and rejects them to look for ONLY vertical cosmic events //
        int ix  = this.getDetector().getIX(key);
@@ -75,18 +81,21 @@ public class FTCalCosmicSelection extends FTApplication{
        if(H_WMAX.getBinContent(key)>singleChThr) flagsel=true;
        if(flagsel){
            for(int i=ix-1; i<=ix+1; i++) {
+               if(i<0 || i>21)continue;
                for(int j=iy-1; j<=iy+1; j++) {
+                   if(j<0 || j>21)continue;
                    if(i!=ix || j!=iy){
                       component = this.getDetector().getComponent(i, j);
                       if(this.getDetector().hasComponent(component)) {
                          if(H_WMAX.getBinContent(component)>clusterThr)cluster++;
+                         //if(key==300)System.out.println("VerticalCosmicSel c: "+key+" "+ix+" "+iy+" CC: "+component+" "+ i+" "+j+" "+H_WMAX.getBinContent(key)+"  "+H_WMAX.getBinContent(component)+"  "+cluster);
                       }
                    }
                } 
             }
         if(cluster>0)flagsel=false;
        }
-       
+       //if (flagsel && key==176)System.out.println("VerticalCosmicSel "+singleChThr+" "+clusterThr+"  "+H_WMAX.getBinContent(key));
        
        return flagsel;
     }
@@ -118,7 +127,8 @@ public class FTCalCosmicSelection extends FTApplication{
             int key = counter.getDescriptor().getComponent();
             if(this.getDetector().hasComponent(key)) {
                //if(H_WMAX.getBinContent(key)>this.getDetector().getThresholds().get(0, 0, key)){
-                   if(H_WMAX.getBinContent(key)>singleChThr){
+               if(H_WMAX.getBinContent(key)>1000.0){
+                   //if(H_WMAX.getBinContent(key)>singleChThr){
                    mpt++;
                }
             }

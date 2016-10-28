@@ -109,6 +109,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     //int pul_i1 = 70;//run714
     //int pul_i2 = 99;//run714
 //     // NEW Preamp Run>=863 && Run<=890//
+    //New preamp threshold = 8
 //    double threshold = 50; // 10 fADC value <-> ~ 5mV
 //    int ped_i1 = 2;
 //    int ped_i2 = 20;

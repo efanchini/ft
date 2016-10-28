@@ -634,6 +634,7 @@ public class FTCALViewerModule implements IDetectorListener,IHashTableListener,A
                 if(pulse[bin]>wmax) wmax=pulse[bin];
             }
             wave_max=wmax;
+           
             // find threshold crossing in pulse region: this determines mode-3 time (4 ns resolution)
             for (int bin=pul_i1; bin<pul_i2; bin++) {
                 if(pulse[bin]>pedestal+threshold) {
