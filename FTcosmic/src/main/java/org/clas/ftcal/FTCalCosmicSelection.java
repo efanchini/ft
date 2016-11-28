@@ -56,6 +56,13 @@ public class FTCalCosmicSelection extends FTApplication{
         return flagsel;
     }
     
+  public Boolean SimCosmicEvtSel(int key, Double charge, double simSignalThr){
+        //System.out.println("SimCosmicEvtSel "+simSignalThr);
+        Boolean flagsel=false;
+        if(charge>simSignalThr) flagsel=true;
+        return flagsel;
+    }  
+    
     public Boolean SignalAboveThrSel(DetectorCounter counter, int key, H1D H_WMAX, ExtendedFADCFitter fitter, double singleChThr){
         //System.out.println("SignalAboveThrSel "+singleChThr);
         Boolean flagsel=false;

@@ -102,30 +102,35 @@ public class FitParametersFile {
     
             public void CCDBcosmic(String filename, FTHashTable table) {     
         // File Format //
-        // Sector Layer Component Pedestal Noise Energy Sigma  Preamp-Gain  Photosensor-Gain //
-        int preampG =600;// Preamp-Gain
+        // Da scrivere in 67 diverse tabelle//
+        // Sector Layer Component Pedestal Ped_Rms Noise Noise_Rms Energy Sigma Threshold Ch_Status Preamp-Gain  Photosensor-Gain //
+        int preampG =700;// Preamp-Gain
         int pmtG =150;// Photosensor-Gain
 
         try {
             PrintWriter fout;
             fout = new PrintWriter(filename);
             String col="";
-            //fout.printf("Sector \t Layer \t Component \t  Pedestal \t Noise \t <E> \t \u03C3(E) \t Preamp-Gain \t Photosensor-Gain");
+            //fout.printf("Sector \t Layer \t Component \t  Pedestal \t RMS \t Noise \t RMS \t <E> \t \u03C3(E) \t Threshold \t Status \t Preamp-Gain \t Photosensor-Gain");
             for(int r=0; r<table.getRowCount(); r++){
+                
                 if(r==0){
                     for(int c=0; c<table.getColumnCount(); c++){
+                        //System.out.println("PARAMETERs name: "+table.getColumnName(c));
                         col=table.getColumnName(c);
-                        if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
-                       || col.equals("<E>") || col.equals("\u03C3(E)")) fout.printf(col+"\t");
+                        //if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
+                       //|| col.equals("<E>") || col.equals("\u03C3(E)")) 
+                            fout.printf(col+"\t");
                     }
                     fout.printf("Preamp-Gain \t Photosensor-Gain \n");
                 }
                 for(int c=0; c<table.getColumnCount(); c++){
                     col=table.getColumnName(c);
-                    if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
-                       || col.equals("<E>") || col.equals("\u03C3(E)")){
+                    //if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
+                      // || col.equals("<E>") || col.equals("\u03C3(E)")){
                         fout.printf(table.getValueAt(r, c)+"\t");
-                    }
+                        //System.out.println("PIPPO "+c+" "+col+" "+table.getValueAt(r, c));
+                   // }
                 }
                 fout.printf(preampG+"\t"+ pmtG +"\n");
                 }

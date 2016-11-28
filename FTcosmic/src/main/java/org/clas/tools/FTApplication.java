@@ -198,6 +198,7 @@ public class FTApplication implements ActionListener {
     }
 
     public double getFieldValue(int index, int key) {
+        //System.out.println("Erica ftApp 1: "+index+" "+key+" "+this.parameters.get(index).getValue());
         return this.parameters.get(index).getValue();
     }
 
@@ -209,8 +210,10 @@ public class FTApplication implements ActionListener {
                 break;
             }
         }
+        //System.out.println("Erica ftApp 2: "+name+" "+key+" "+index+" "+this.getFieldValue(index,key));
         if(index==-1) return index;
         else          return this.getFieldValue(index,key);
+        
     }
         
     public void actionPerformed(ActionEvent e) {

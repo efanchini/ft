@@ -13,6 +13,9 @@ import javax.swing.JPanel;
 
 
 import org.clas.ftcal.FTCALCosmic;
+import org.clas.ftcal.FTCALDetector;
+import org.clas.ftcal.FTCALSimulatedData;
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.basic.IDetectorModule;
@@ -20,6 +23,7 @@ import org.jlab.clas12.basic.IDetectorProcessor;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clasrec.main.DetectorEventProcessorPane;
 import org.jlab.data.io.DataEvent;
+import org.jlab.evio.clas12.EvioDataBank;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.root.attr.ColorPalette;
 
@@ -30,25 +34,19 @@ import org.root.attr.ColorPalette;
 public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule, ActionListener {
 
     
-    FTCALCosmic moduleFTCAL=new FTCALCosmic();
-    
-        
+    FTCALCosmic moduleFTCAL=new FTCALCosmic();   
     DetectorEventProcessorPane evPane = new DetectorEventProcessorPane();
-    
-   
-   
+
     EventDecoder decoder = new EventDecoder();
     int nProcessed = 0;
- 
-    
+    FTCALDetector viewFTCAL = new FTCALDetector("FTCAL");            
+    FTCALSimulatedData simulation = new FTCALSimulatedData(viewFTCAL);
     
     // ColorPalette class defines colors 
     ColorPalette palette = new ColorPalette();
  
     JPanel detectorPanel = null;
     JPanel FTCALPanel = null;
-    
-  
 
     public FTCosmicViewerModule() {
         
@@ -87,26 +85,30 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
 
     private void initRawDataDecoder() {
         moduleFTCAL.initDecoder();
-  
     }
 
     private void initHistograms() {
     }
 
     private void resetHistograms() {
-       
         moduleFTCAL.resetHistograms();
     }
 
     
     public void processEvent(DataEvent de) {
         EvioDataEvent event = (EvioDataEvent) de;
-
+        if(event.hasBank("FTCAL::dgtz")){
+            simulation.eventBankDecoder(event,"FTCAL::dgtz");
+            DetectorCollection<Double> adc = this.simulation.getSimAdc();
+            DetectorCollection<Double> tdc = this.simulation.getSimTdc();
+            moduleFTCAL.processDecodedSimEvent(adc,tdc);  
+        }
+        else{
         decoder.decode(event);
-        nProcessed++;
-        
         moduleFTCAL.processDecodedEvent();  
-        
+        }
+        nProcessed++;
+        if((nProcessed%5000)==0)System.out.println("Decoded Event: "+nProcessed);
     }
 
         

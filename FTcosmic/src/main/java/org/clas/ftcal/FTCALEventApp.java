@@ -26,8 +26,6 @@ public class FTCALEventApp extends FTApplication {
     
     // decoder related information
     int nProcessed = 0;
-        
-
     
     public FTCALEventApp(FTDetector d) {
         super(d);
@@ -67,6 +65,17 @@ public class FTCALEventApp extends FTApplication {
         }
     }
     
+    
+        public void addSimEvent(DetectorCollection<Double> adc) {   
+        for(int key : adc.getComponents(0, 0)) {
+            if(H_WAVE.hasEntry(0, 0, key)) {
+                //H_WAVE.get(0, 0, key).reset();
+                H_WAVE.get(0, 0, key).fill(adc.get(0, 0, key));
+                H_WMAX.fill(key,adc.get(0, 0, key));
+            }
+        }
+    }
+       
     public void updateCanvas(int keySelect) {
         this.getCanvas(0).draw(H_WAVE.get(0, 0, keySelect));
     }
