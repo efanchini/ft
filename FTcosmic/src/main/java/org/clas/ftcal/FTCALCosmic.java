@@ -230,8 +230,8 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
    
  private void initTable() {
      // SummaryTable //
-        summaryTable = new FTHashTable(3,"Pedestal:d","Noise:i","N. Events:i","<E>:d","\u03C3(E):d","\u03C7\u00B2(E):d","<T>:d","\u03C3(T):d");
-        double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1, -1};
+        summaryTable = new FTHashTable(3,"Pedestal:d","Noise:i","N. Events:i","<E>:d","\u03C3(E):d","\u03C7\u00B2(E):d","<T>:d","\u03C3(T):d","Status:i");
+        double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
         int irow=0;
         keyToRow = new int[viewFTCAL.getComponentMaxCount()+1];
         for (int component : viewFTCAL.getDetectorComponents()) {
@@ -243,6 +243,8 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             summaryTable.addConstrain(3+3, ftCosmic.getParameter("<E>").getParMin(), ftCosmic.getParameter("<E>").getParMax()); 
             summaryTable.addConstrain(5+3, ftCosmic.getParameter("\u03C7\u00B2(E)").getParMin(), ftCosmic.getParameter("\u03C7\u00B2(E)").getParMax()); 
             summaryTable.addConstrain(7+3, ftCosmic.getParameter("\u03C3(T)").getParMin(), ftCosmic.getParameter("\u03C3(T)").getParMax()); 
+            summaryTable.addConstrain(8+3, ftNoise.getParameter("Status").getParMin(), ftNoise.getParameter("Status").getParMax());
+            //System.out.println("Erica tabkle: "+ftNoise.getParameter("Status").getParMin()+"  "+ftNoise.getParameter("Status").getParMax()+"  "+ftNoise.getParameter(0).getName());
             irow++;
         }
         canvasTable = new FTHashTableViewer(summaryTable);
@@ -359,7 +361,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     
     public void processDecodedSimEvent(DetectorCollection<Double> adc, DetectorCollection<Double> tdc) {
         nProcessed++;
-        if(nProcessed>0)freezeCosmicSel();
+        //if(nProcessed>0)freezeCosmicSel();
         this.ftEvent.addSimEvent(adc);
         this.ftNoise.addSimEvent(adc);
         this.ftCosmic.addSimEvent(adc, tdc);
@@ -414,7 +416,7 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             ftNoise.getRadioPane().setVisible(false);
             ftCosmic.getRadioPane().setVisible(false);
             Color col = new Color(255, 100, 0);
-            if(this.summaryTable.isRowValid(sector,layer,paddle)) col = new Color(0, 0, 100);
+            //if(this.summaryTable.isRowValid(sector,layer,paddle)) col = new Color(0, 0, 100);
             String selectedKey = (String) summaryTable.getValueAt(canvasTable.getTable().getSelectedRow(), 2);
             if(paddle == Integer.parseInt(selectedKey)) col = new Color(255,0,0);
             shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
@@ -424,16 +426,16 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
     }
 
    private void updateTable() {
-
         for(int key : viewFTCAL.getDetectorComponents()) {
             String pedestal = String.format ("%.1f", ftNoise.getFieldValue("Pedestal Mean",key));
             String noise    = String.format ("%.2f", ftNoise.getFieldValue("Noise",key));
-            String nev      = String.format ("%d",   (int) ftCosmic.getFieldValue("Occupancy", key));
+            String nev      = String.format ("%d",   (int)ftCosmic.getFieldValue("Occupancy", key));
             String mips     = String.format ("%.2f", ftCosmic.getFieldValue("<E>", key));
             String emips    = String.format ("%.2f", ftCosmic.getFieldValue("\u03C3(E)", key));
             String chi2     = String.format ("%.2f", ftCosmic.getFieldValue("\u03C7\u00B2(E)", key));
             String time     = String.format ("%.2f", ftCosmic.getFieldValue("<T>", key));
             String stime    = String.format ("%.2f", ftCosmic.getFieldValue("\u03C3(T)", key));
+            String status   = String.format ("%d",   (int)ftNoise.getFieldValue("Status", key));
 
             summaryTable.setValueAtAsDouble(0, Double.parseDouble(pedestal), 1, 1, key);
             summaryTable.setValueAtAsDouble(1, Double.parseDouble(noise)   , 1, 1, key);
@@ -443,13 +445,14 @@ public class FTCALCosmic implements IDetectorListener,ActionListener,ChangeListe
             summaryTable.setValueAtAsDouble(5, Double.parseDouble(chi2)    , 1, 1, key);
             summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 1, 1, key);
             summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 1, 1, key);  
+            summaryTable.setValueAtAsDouble(8, Double.parseDouble(status)  , 1, 1, key);  
 
         }
     }
-    
-    
+
  
     private void updateCCDBTable() {
+        System.out.println("ERICA CCDB2 TABLE");
         for(int key : viewFTCAL.getDetectorComponents()) {
             String status   = String.format ("%d", (int) ftNoise.getFieldValue("Status", key));
             String pedestal = String.format ("%.1f", ftNoise.getFieldValue("Pedestal Mean",key));

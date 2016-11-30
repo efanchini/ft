@@ -26,6 +26,7 @@ public class FTCALEventApp extends FTApplication {
     
     // decoder related information
     int nProcessed = 0;
+    Boolean realflag=true;
     
     public FTCALEventApp(FTDetector d) {
         super(d);
@@ -35,7 +36,7 @@ public class FTCALEventApp extends FTApplication {
     }
 
     private void initCollections() {
-        H_WAVE   = this.getData().addCollection(new H1D("Wave", 100, 0.0, 100.0),"fADC Sample","fADC Counts",5,"H_WAVE");
+        H_WAVE   = this.getData().addCollection(new H1D("Wave", 300, 0.0, 600.0),"fADC Sample","fADC Counts",5,"H_WAVE");
         H_WMAX   = new H1D("WMAX", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_TCROSS = new H1D("TCROSS", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
     }
@@ -66,12 +67,13 @@ public class FTCALEventApp extends FTApplication {
     }
     
     
-        public void addSimEvent(DetectorCollection<Double> adc) {   
+    public void addSimEvent(DetectorCollection<Double> adc) { 
+        realflag=false;
+        H_WMAX.reset();
         for(int key : adc.getComponents(0, 0)) {
             if(H_WAVE.hasEntry(0, 0, key)) {
-                //H_WAVE.get(0, 0, key).reset();
                 H_WAVE.get(0, 0, key).fill(adc.get(0, 0, key));
-                H_WMAX.fill(key,adc.get(0, 0, key));
+                H_WMAX.fill(key,1);
             }
         }
     }
@@ -80,16 +82,31 @@ public class FTCALEventApp extends FTApplication {
         this.getCanvas(0).draw(H_WAVE.get(0, 0, keySelect));
     }
     
+     @Override
+    public void resetCollections() {
+        H_WMAX.reset();
+        for (int component : this.getDetector().getDetectorComponents()) {
+            H_WAVE.get(0, 0, component).reset();
+        }
+    }
+    
     @Override
     public Color getColor(int key) {
         Color col = new Color(100, 100, 100);
-        if(H_WMAX.getBinContent(key)>this.getDetector().getThresholds().get(0, 0, key)) {
-            if(H_TCROSS.getBinContent(key)>0) {
-                col = new Color(140, 0, 200);
+        if(this.realflag){
+            if(H_WMAX.getBinContent(key)>this.getDetector().getThresholds().get(0, 0, key)) {
+                if(H_TCROSS.getBinContent(key)>0) {
+                   col = new Color(140, 0, 200);
+                }
+                else {
+                  col = new Color(200, 0, 200);
+             }
             }
-            else {
-                col = new Color(200, 0, 200);
-            }
+           }
+        else{
+            //System.out.println("EVT "+this.realflag+"  "+key+"  "+H_WMAX.getBinContent(key));
+            if(H_WMAX.getBinContent(key)>0)col = new Color(200, 0, 200);
+            //else col = new Color(200, 0, 200);
         }
         return col;
     }

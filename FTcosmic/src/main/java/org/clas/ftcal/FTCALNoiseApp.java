@@ -33,6 +33,8 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
     
     // decoder related information
     int nProcessed = 0;
+    double nsPerSample=4;
+    double LSB = 0.4884;
 
     public FTCALNoiseApp(FTDetector d) {
         super(d);
@@ -40,18 +42,20 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         this.addCanvas("Noise");
         this.getCanvas("Noise").divideCanvas(2, 2);
         this.addFields("Status", "Pedestal Mean", "Pedestal RMS", "Noise", "Noise RMS");
-        this.getParameter(0).setRanges(0.0,0.0,1.0,1.0);
+        this.getParameter(0).setRanges(0.0,0.0,1.0,6.0);
         this.getParameter(1).setRanges(100.,300.,1.0,400.0);
         this.getParameter(2).setRanges(0.0,10.0,10.0,10.0);
-        //this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);//old preamps
-        //this.getParameter(3).setRanges(1.0,1.05,1.0,2.0);//new preamps
-        this.getParameter(3).setRanges(3.0,500.0,1.0,2.0);//Noise parameters //
+        //this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);//old preamps  Noise parameters
+        //this.getParameter(3).setRanges(1.0,1.05,1.0,2.0);//new preamps  Noise parameters
+        this.getParameter(3).setRanges(3.0,500.0,1.0,2.0);//Noise parameters for simulated data to be changed by hand //
         this.initCollections();
     }
 
     private void initCollections() {
-        H_PED   = this.getData().addCollection(new H1D("Pedestal", 150, 0.0, 350.0),"Pedestal (fADC counts)","Counts",2,"H_PED");
-        H_NOISE = this.getData().addCollection(new H1D("Noise", 150, 0.0, 350.0),"RMS (mV)","Counts",4,"H_NOISE"); 
+        
+        H_PED   = this.getData().addCollection(new H1D("Pedestal", 100, 0.0, 300.0),"Q(pC)","Counts",2,"H_PED");
+        H_NOISE = this.getData().addCollection(new H1D("Noise", 100, 0.0, 300.0),"Q(pC)","Counts",4,"H_NOISE"); 
+        
         //OLD real cosmic data //
 //        H_PED   = this.getData().addCollection(new H1D("Pedestal", 400, 100.0, 300.0),"Pedestal (fADC counts)","Counts",2,"H_PED");
 //        H_NOISE = this.getData().addCollection(new H1D("Noise", 200, 0.0, 10.0),"RMS (mV)","Counts",4,"H_NOISE"); 
@@ -93,8 +97,10 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
     
         public void addSimEvent(DetectorCollection<Double> adc) { 
         nProcessed++;
+        double charge =0.0;
         for(int key : adc.getComponents(0, 0)) {
             if(adc.hasEntry(0, 0, key)){
+             charge=(adc.get(0, 0, key)*LSB*nsPerSample/50);
              H_PED.get(0,0,key).fill(adc.get(0, 0, key));
              H_NOISE.get(0, 0, key).fill(adc.get(0, 0, key));
             }
@@ -158,7 +164,6 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
                     else if(this.getParameter(3).isLow(this.H_NOISE.get(0, 0, key).getMean()) || this.H_NOISE.get(0, 0, key).getEntries()==0){
                         value=3;
                     }//dead
-                    //else if(this.getParameter(3).isLow(this.H_NOISE.get(0, 0, key).getMean()) || this.H_NOISE.get(0, 0, key).getEntries()==0)   value=3;//dead
                     else if(this.getParameter(3).isHigh(this.H_NOISE.get(0, 0, key).getMean())){
                         value=1;
                     }//noisy
