@@ -53,12 +53,9 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
 
     private void initCollections() {
         
-        H_PED   = this.getData().addCollection(new H1D("Pedestal", 100, 0.0, 300.0),"Q(pC)","Counts",2,"H_PED");
-        H_NOISE = this.getData().addCollection(new H1D("Noise", 100, 0.0, 300.0),"Q(pC)","Counts",4,"H_NOISE"); 
+        H_PED   = this.getData().addCollection(new H1D("Pedestal", 5000, 0.0, 7000.0),"fADC ch","Counts",2,"H_PED");
+        H_NOISE = this.getData().addCollection(new H1D("Noise",    5000, 0.0, 7000.0),"fADC ch","Counts",4,"H_NOISE"); 
         
-        //OLD real cosmic data //
-//        H_PED   = this.getData().addCollection(new H1D("Pedestal", 400, 100.0, 300.0),"Pedestal (fADC counts)","Counts",2,"H_PED");
-//        H_NOISE = this.getData().addCollection(new H1D("Noise", 200, 0.0, 10.0),"RMS (mV)","Counts",4,"H_NOISE"); 
         pedestalMEAN    = new double[this.getDetector().getNComponents()];
         pedestalRMS     = new double[this.getDetector().getNComponents()];
         noiseRMS        = new double[this.getDetector().getNComponents()];
@@ -82,12 +79,6 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         for (DetectorCounter counter : counters) {
             int key = counter.getDescriptor().getComponent();
             if(H_PED.hasEntry(0, 0, key)) {
-//                //for run609 //
-//                if(key==9 || key==10 || key==31 || key==32 ||key==53 ||key==54 ||key==75 ||key==76 ||key==97 ||key==98 ||
-//                    key==118 ||  key==119 || key==120 ||  key==140 ||key==141){
-//                    this.getFitter().fitException(counter.getChannels().get(0), 4, 24, 60, 120);
-//                }
-//                else this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
                 this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key)); //normale
                 H_PED.get(0,0,key).fill(this.getFitter().getPedestal());
                 H_NOISE.get(0, 0, key).fill(this.getFitter().getRMS());
@@ -120,14 +111,14 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         GraphErrors  G_PED = new GraphErrors(detectorIDs,pedestalRMS);
         G_PED.setTitle(" "); //  title
         G_PED.setXTitle("Crystal ID"); // X axis title
-        G_PED.setYTitle("Pedestal RMS (mV)");   // Y axis title
+        G_PED.setYTitle("RMS (mV)");   // Y axis title
         G_PED.setMarkerColor(2); // color from 0-9 for given palette
         G_PED.setMarkerSize(5); // size in points on the screen
         G_PED.setMarkerStyle(1); // Style can be 1 or 2
         GraphErrors  G_NOISE = new GraphErrors(detectorIDs,noiseMEAN);
         G_NOISE.setTitle(" "); //  title
         G_NOISE.setXTitle("Crystal ID"); // X axis title
-        G_NOISE.setYTitle("Noise (mV)");   // Y axis title
+        G_NOISE.setYTitle("Mean (mV)");   // Y axis title
         G_NOISE.setMarkerColor(4); // color from 0-9 for given palette
         G_NOISE.setMarkerSize(5); // size in points on the screen
         G_NOISE.setMarkerStyle(1); // Style can be 1 or 2
@@ -138,6 +129,7 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         if (H_NOISE.hasEntry(0, 0, keySelect)) {
             H1D hnoise = H_NOISE.get(0, 0, keySelect);
             H1D hped   = H_PED.get(0, 0, keySelect);
+            this.getCanvas(0);
             this.getCanvas(0).cd(2);
             this.getCanvas(0).draw(hped,"S");
             this.getCanvas(0).cd(3);

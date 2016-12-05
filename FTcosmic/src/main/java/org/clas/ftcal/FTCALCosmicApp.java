@@ -68,7 +68,7 @@ public class FTCALCosmicApp extends FTApplication {
     double singleChThr = 20.0;// Single channel selection
     double signalThr =0.0;
     double simSignalThr=0.0;// Threshold used for simulated events in pC
-    double startTime =124.4;
+    double startTime = 0.0;
     CustomizeFit cfit = new CustomizeFit();
     FTCalCosmicSelection cosmicsel;
     private ArrayList selOpt;

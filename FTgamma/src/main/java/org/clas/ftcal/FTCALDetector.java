@@ -65,19 +65,7 @@ public class FTCALDetector extends FTDetector {
         this.x0=xCenter;
         this.y0=yCenter;
     }
-    
-    public void addPaddles() {
-        for(int ipaddle=0; ipaddle<4; ipaddle++) {
-            int component = 501+ipaddle;
-            points.add(0, 0, component, new ShapePoint(0,0));
-            DetectorShape2D paddle = new DetectorShape2D(DetectorType.FTCAL, 0, 0, 501+ipaddle);
-            paddle.createBarXY(crystal_size*nCrystalX, crystal_size/2.);
-            paddle.getShapePath().translateXYZ(crystal_size*nCrystalX/2.,crystal_size*(nCrystalX+2)*(ipaddle % 2)+crystal_size/4.*(((int) ipaddle/2)*2-1),0.0);
-            paddle.setColor(0, 145, 0);
-            this.addShape(paddle);
-        }
-    }
-    
+
     public void addSync() {
         DetectorShape2D paddle = new DetectorShape2D(DetectorType.FTCAL, 0, 0, 500);
         points.add(0, 0, 500, new ShapePoint(0,0));
@@ -92,18 +80,7 @@ public class FTCALDetector extends FTDetector {
         for (int component : this.getDetectorComponents()) {
             int ix = this.getIdX(component);
             int iy = this.getIdY(component);
-            thresholds.add(0, 0, component, threshold);// for runs Run>692
-            // For runs 487(?)>Run<=691 from here 1)
-//            if(ix!=-9) {
-//                thresholds.add(0, 0, component, threshold);
-//            }
-//            else if(ix==-9) {
-////                    if     (iy==-6 || iy==-5 || iy==-4 || iy==-3 || iy==-2 || iy==-1) thresholdValue.add(0, 0, component, threshold/3.);     
-////                    else if(iy== 6 ||           iy==4  || iy==3  || iy==2  || iy==1 ) thresholdValue.add(0, 0, component, threshold/2.);
-////                    else                                                              thresholdValue.add(0, 0, component, threshold);
-//                if     (iy==-7 || iy==5 || iy==6 || iy==7) thresholds.add(0, 0, component, threshold);
-//                else                                       thresholds.add(0, 0, component, threshold/3.);
-//            }// to here 1)
+            thresholds.add(0, 0, component, threshold);
         }
     }
     

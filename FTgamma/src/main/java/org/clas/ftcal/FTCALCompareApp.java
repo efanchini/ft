@@ -14,7 +14,7 @@ import org.jlab.clas.detector.DetectorCollection;
 import org.root.func.F1D;
 import org.root.histogram.H1D;
 import org.clas.tools.CalibrationData;
-import org.clas.ftcal.FTCALCosmic;
+import org.clas.ftcal.FTCALGamma;
 import org.clas.tools.Miscellaneous;
 import org.root.attr.ColorPalette;
 
@@ -25,7 +25,7 @@ import org.root.attr.ColorPalette;
 public class FTCALCompareApp extends FTApplication{
     
     CalibrationData calib = null;
-    FTCALCosmic cosmic =null;
+    FTCALGamma gamma =null;
    
 
     // Data Collection 
@@ -46,9 +46,9 @@ public class FTCALCompareApp extends FTApplication{
     DetectorCollection<F1D> F_Ref_Time      = new DetectorCollection<F1D>();
     
     
-    H1D H_COSMIC_MEAN      = null;
+    H1D H_MEAN      = null;
     H1D H_TIME_MEAN        = null;
-    H1D H_REF_COSMIC_MEAN  = null;
+    H1D H_REF_MEAN  = null;
     H1D H_REF_TIME_MEAN    = null;
     H1D hCharge            = new H1D("hCharge", 80, 0.0, 40.0);
     H1D hTime              = new H1D("hTime", 80, -20.0, 60.0);
@@ -83,7 +83,7 @@ public class FTCALCompareApp extends FTApplication{
     
     private void initCollections() {
         this.calib = new CalibrationData();
-        this.cosmic = new FTCALCosmic();
+        this.gamma = new FTCALGamma();
         
         H_CHARGE     = this.getData().addCollection(new H1D("Charge", 80, 0.0, 40.0),"Charge (pC)","Counts",2,"H_CHARGE");
         H_TIME       = this.getData().addCollection(new H1D("T_Time", 80, -20.0, 60.0), "Time (ns)", "Counts", 5, "H_TIME");
@@ -99,15 +99,15 @@ public class FTCALCompareApp extends FTApplication{
         F_Ref_Time   = this.getData().addCollection(new F1D("gaus", -20.0, 60.0),"Time","F_Ref_Charge");
 
         
-        H_COSMIC_MEAN      = new H1D("ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
+        H_MEAN      = new H1D("ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_TIME_MEAN        = new H1D("TIME   MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
-        H_REF_COSMIC_MEAN  = new H1D("Reference ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
+        H_REF_MEAN  = new H1D("Reference ENERGY MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_REF_TIME_MEAN    = new H1D("Reference TIME   MEAN"  , this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());         
     }
    
     
     private void dumpCalib_Ref(String hipoFile){
-        // Cosmic calibration //
+        // calibration //
         calib.getFile(hipoFile);
         H_REF_CHARGE = calib.getCollection("Energy_histo");
         H_REF_TIME   = calib.getCollection("Time_histo"); 
@@ -119,7 +119,7 @@ public class FTCALCompareApp extends FTApplication{
     }
     
    public void dumpCalib(String hipoFile){
-        // Cosmic calibration //
+        // calibration //
         calib.getFile(hipoFile);
         H_CHARGE = calib.getCollection("Energy_histo");
         H_TIME   = calib.getCollection("Time_histo"); 
@@ -277,9 +277,9 @@ public class FTCALCompareApp extends FTApplication{
             if(this.H_PED.get(0, 0, component).getEntries()>0)this.H_PED.get(0, 0, component).reset(); 
             if(this.H_NOISE.get(0, 0, component).getEntries()>0)this.H_NOISE.get(0, 0, component).reset();       
         }
-        if(this.H_COSMIC_MEAN.getEntries()>0)this.H_COSMIC_MEAN.reset();
+        if(this.H_MEAN.getEntries()>0)this.H_MEAN.reset();
         if(this.H_TIME_MEAN.getEntries()>0)this.H_TIME_MEAN.reset();
-        if(this.H_REF_COSMIC_MEAN.getEntries()>0)this.H_REF_COSMIC_MEAN.reset();
+        if(this.H_REF_MEAN.getEntries()>0)this.H_REF_MEAN.reset();
         if(this.H_REF_TIME_MEAN.getEntries()>0)this.H_REF_TIME_MEAN.reset();
     } 
     

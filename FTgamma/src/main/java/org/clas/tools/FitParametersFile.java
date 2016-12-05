@@ -37,14 +37,14 @@ public class FitParametersFile {
     
     public void writeFitLandauFile(String filename) throws FileNotFoundException {
         /*
-            Cosmic fit based on 1 landau + exponencial functions
+            Fit based on 1 landau + exponencial functions
             // Format //
             // Sector Layer Component N. Events NFiPar Amp E Sigma(E) err_sigma(E) P0  P1  P2  Fct_Xmin  Fct_XmaxChi^2 NDF// 
         */
        this.fname=filename;
        PrintWriter filetowrite = new PrintWriter(this.fname);
        this.file=filetowrite;
-       System.out.println("FitParametersFile=> Cosmic Fit Parameters File: "+ this.fname);
+       System.out.println("FitParametersFile=> Fit Parameters File: "+ this.fname);
         PrintWriter fout = this.file;
         int nevt=0;
         String dd = "";       
@@ -100,16 +100,31 @@ public class FitParametersFile {
         catch(FileNotFoundException ex){}
     }
     
-            public void CCDBcosmic(String filename, FTHashTable table) {     
+    public void CCDBFile(String filename, FTHashTable table) {     
         // File Format //
-        // Da scrivere in 67 diverse tabelle//
+        // Da scrivere in diverse tabelle//
         // Sector Layer Component Pedestal Ped_Rms Noise Noise_Rms Energy Sigma Threshold Ch_Status Preamp-Gain  Photosensor-Gain //
-        int preampG =700;// Preamp-Gain
+        int preampG = (int)(1800/2.7);// Preamp-Gain
         int pmtG =150;// Photosensor-Gain
+        
 
         try {
-            PrintWriter fout;
+            PrintWriter fout;// Full table //
             fout = new PrintWriter(filename);
+            
+            PrintWriter fout_status;// Status table //
+            fout_status = new PrintWriter("./ftcal_status.txt");
+            
+            // Da implementare //
+//            PrintWriter fout_noise;// Noise table //
+//            fout_noise = new PrintWriter("./ftcal_noise.txt");
+//            
+//            PrintWriter fout_timeoffset;// Time offset table //
+//            fout_timeoffset = new PrintWriter("./ftcal_time_offset.txt");
+//            
+//            PrintWriter fout_q2e;// Chareg to energy table //
+//            fout_q2e = new PrintWriter("./ftcal_charge_to_energy.txt");
+
             String col="";
             //fout.printf("Sector \t Layer \t Component \t  Pedestal \t RMS \t Noise \t RMS \t <E> \t \u03C3(E) \t Threshold \t Status \t Preamp-Gain \t Photosensor-Gain");
             for(int r=0; r<table.getRowCount(); r++){
@@ -135,11 +150,20 @@ public class FitParametersFile {
                 fout.printf(preampG+"\t"+ pmtG +"\n");
                 }
             fout.close();
+            fout_status.close();
+            //fout_noise.close();
+            //fout_timeoffset.close();
+            //fout_q2e.close();
+            
             System.out.println("FitParametersFile => CCDB file written: "+filename);
         } catch (FileNotFoundException ex) {
          
         }
     }  
+            
+            
+
+            
  
     
 }

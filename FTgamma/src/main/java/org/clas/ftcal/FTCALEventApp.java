@@ -28,6 +28,21 @@ public class FTCALEventApp extends FTApplication {
     int nProcessed = 0;
     Boolean realflag=true;
     
+    //Color palette renormalization //
+    private double smin=5.0;
+    private double paintweight =255.0;
+    
+       // analysis realted info //
+    double nsPerSample=4;
+    double LSB = 0.4884;
+    double clusterThr = 50.0;// Vertical selection
+    double singleChThr = 20.0;// Single channel selection
+    double signalThr =0.0;
+    double simSignalThr=0.0;// Threshold used for simulated events in pC
+    double startTime =124.4;
+    double charge2e = 15.3/6.005; //MeV
+    
+    
     public FTCALEventApp(FTDetector d) {
         super(d);
         this.setName("Event Viewer");
@@ -36,9 +51,10 @@ public class FTCALEventApp extends FTApplication {
     }
 
     private void initCollections() {
-        H_WAVE   = this.getData().addCollection(new H1D("Wave", 300, 0.0, 600.0),"fADC Sample","fADC Counts",5,"H_WAVE");
+        H_WAVE   = this.getData().addCollection(new H1D("Wave", 1000, 0.0, 5000.0),"Energy (MeV)","Counts",5,"H_WAVE");
         H_WMAX   = new H1D("WMAX", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_TCROSS = new H1D("TCROSS", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
+        
     }
     
     public void addEvent(List<DetectorCounter> counters) {   
@@ -49,13 +65,6 @@ public class FTCALEventApp extends FTApplication {
             if(H_WAVE.hasEntry(0, 0, key)) {
                 H_WAVE.get(0, 0, key).reset();
                 short pulse[] = counter.getChannels().get(0).getPulse();
-//                 //for run609 //
-//                if(key==9 || key==10 || key==31 || key==32 ||key==53 ||key==54 ||key==75 ||key==76 ||key==97 ||key==98 ||
-//                    key==118 ||  key==119 || key==120 ||  key==140 ||key==141){
-//                    this.getFitter().fitException(counter.getChannels().get(0), 4, 24, 60, 120);
-//                }
-//                else this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));
-
                 this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key));                
                 for (int i = 0; i < Math.min(pulse.length, H_WAVE.get(0, 0, key).getAxis().getNBins()); i++) {
                     H_WAVE.get(0, 0, key).fill(i, pulse[i]);
@@ -70,10 +79,12 @@ public class FTCALEventApp extends FTApplication {
     public void addSimEvent(DetectorCollection<Double> adc) { 
         realflag=false;
         H_WMAX.reset();
+        double charge=0.0;
         for(int key : adc.getComponents(0, 0)) {
             if(H_WAVE.hasEntry(0, 0, key)) {
-                H_WAVE.get(0, 0, key).fill(adc.get(0, 0, key));
-                H_WMAX.fill(key,1);
+                charge=(adc.get(0, 0, key)*LSB*nsPerSample/50.0)*this.charge2e;
+                H_WAVE.get(0, 0, key).fill(charge);
+                H_WMAX.fill(key, charge);
             }
         }
     }
@@ -104,9 +115,16 @@ public class FTCALEventApp extends FTApplication {
             }
            }
         else{
-            //System.out.println("EVT "+this.realflag+"  "+key+"  "+H_WMAX.getBinContent(key));
-            if(H_WMAX.getBinContent(key)>0)col = new Color(200, 0, 200);
-            //else col = new Color(200, 0, 200);
+            paintweight =  (255.0/(this.H_WAVE.get(0, 0, key).getAxis().max()));
+            double r = (H_WMAX.getBinContent(key)*paintweight);
+            double g = (r-((int)r))*255;
+            double b = (g-((int)g))*255;
+            //System.out.println("EVT "+key+"  "+paintweight+"  "+r+"  "+g+" "+b );
+            if(this.H_WAVE.get(0, 0, key).getEntries()>0){
+                if(r>255)col = new Color(255, 255, 255);
+                else if(H_WMAX.getBinContent(key)>this.smin)col = new Color((int)r, (int)g, (int)b); 
+                
+            }       
         }
         return col;
     }

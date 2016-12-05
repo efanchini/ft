@@ -49,6 +49,8 @@ public class FTCALSimulatedData extends FTApplication{
             adc = (double)this.eviobank.getInt("ADC", row);
             tdc = (double)this.eviobank.getInt("TDC", row);
            
+            //System.out.println("TEST: => slot "+s+" layer "+l+" component "+c+" adc: "+adc+" tdc: "+tdc);
+            
             this.sim_adc.add(0, 0, c, adc);
             this.sim_tdc.add(0, 0, c, tdc);
             //if(c==130 || c==155|| c==291 ||c==391)System.out.println("Erica Sim1: sim_ad.size:"+row+" "+s+"  "+l+"  "+c

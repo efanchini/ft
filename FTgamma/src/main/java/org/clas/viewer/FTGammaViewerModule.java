@@ -12,7 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 
-import org.clas.ftcal.FTCALCosmic;
+import org.clas.ftcal.FTCALGamma;
 import org.clas.ftcal.FTCALDetector;
 import org.clas.ftcal.FTCALSimulatedData;
 import org.jlab.clas.detector.DetectorCollection;
@@ -31,10 +31,10 @@ import org.root.attr.ColorPalette;
  *
  * @author gavalian
  */
-public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule, ActionListener {
+public class FTGammaViewerModule implements IDetectorProcessor, IDetectorModule, ActionListener {
 
     
-    FTCALCosmic moduleFTCAL=new FTCALCosmic();   
+    FTCALGamma moduleFTCAL=new FTCALGamma();   
     DetectorEventProcessorPane evPane = new DetectorEventProcessorPane();
 
     EventDecoder decoder = new EventDecoder();
@@ -48,7 +48,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     JPanel detectorPanel = null;
     JPanel FTCALPanel = null;
 
-    public FTCosmicViewerModule() {
+    public FTGammaViewerModule() {
         
         moduleFTCAL.setDecoder(decoder);
         
@@ -113,11 +113,11 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
 
         
     public String getName() {
-        return "FTCosmicViewerModule";
+        return "FTGammaViewerModule";
     }
 
     public String getAuthor() {
-        return "De Vita";
+        return "Fanchini";
     }
 
     public DetectorType getType() {
@@ -125,7 +125,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     }
 
     public String getDescription() {
-        return "FT Cosmic Display";
+        return "FT Gamma Display";
     }
 
     public JPanel getDetectorPanel() {
@@ -133,7 +133,7 @@ public class FTCosmicViewerModule implements IDetectorProcessor, IDetectorModule
     }
 
     public static void main(String[] args) {
-        FTCosmicViewerModule module = new FTCosmicViewerModule();
+        FTGammaViewerModule module = new FTGammaViewerModule();
         JFrame frame = new JFrame();
         frame.add(module.getDetectorPanel());
         frame.pack();

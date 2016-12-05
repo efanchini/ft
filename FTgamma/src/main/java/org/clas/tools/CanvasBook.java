@@ -125,15 +125,11 @@ public class CanvasBook extends JPanel implements ActionListener {
             String   op = this.options.get(this.currentPosition);    
        
             if(op.contains("same")==false){
-                //System.out.println(" (    ) "  + this.currentPosition + 
-                //        " on pad " + counter+"   "+ds.getName());
                 canvas.cd(counter);
                 this.initCanvas();
                 canvas.draw(ds,op);
                 
             } else {
-                //System.out.println(" (same) "  + this.currentPosition + 
-                //        " on pad " + counter+"   "+ds.getName());
                 canvas.draw(ds, "op+same");
             }
             
