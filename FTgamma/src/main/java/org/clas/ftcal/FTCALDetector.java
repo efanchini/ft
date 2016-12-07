@@ -68,7 +68,7 @@ public class FTCALDetector extends FTDetector {
 
     public void addSync() {
         DetectorShape2D paddle = new DetectorShape2D(DetectorType.FTCAL, 0, 0, 500);
-        points.add(0, 0, 500, new ShapePoint(0,0));
+        points.add(0, 0, 500, new ShapePoint(0, 0));
         paddle.createBarXY(crystal_size, crystal_size);
         paddle.getShapePath().translateXYZ(crystal_size*0.5,crystal_size*(22-0.5+1),0.0);
         paddle.setColor(0, 145, 0);

@@ -158,6 +158,10 @@ public class FTHashTable extends DefaultTableModel {
     }
     
     public FTTableRow  getRow(int... index){
+//        System.out.println("PLUTO GET ROW1 "+ index);
+//        System.out.println("PLUTO GET ROW2 "+ this.hashCollection.getIndexCount());
+//        System.out.println("PLUTO GET ROW3 "+ this.hashCollection.getMap().toString());
+//        System.out.println("PLUTO GET ROW4 "+ this.hashCollection.getItem(index));
         return this.hashCollection.getItem(index);
     }
     
@@ -255,9 +259,12 @@ public class FTHashTable extends DefaultTableModel {
         return trow.get(column-ic).toString();
     }
     
-    public Object getValueAt(int column, int... index){        
+    public Object getValueAt(int column, int... index){ 
         FTTableRow  row = this.getRow(index);
-            return row.get(column);
+        Object obj;
+        if(this.getRow(index)==null)obj=0;
+        else obj=row.get(column);
+            return obj;
     }
         
     public boolean isValid(int row, int column){
@@ -276,11 +283,13 @@ public class FTHashTable extends DefaultTableModel {
 
     public boolean isRowValid(int... index){
         boolean rowStatus=true;
+        boolean cellStatus=true;
         for(int column=0; column<this.getColumnCount(); column++) {
             if(this.constrains.containsKey(column)!=false) {
-//                System.out.println(index + " " + column + " " + this.getValueAt(column-index.length, index));
-                Double value = (Double) this.getValueAt(column-index.length, index);
-                boolean cellStatus=this.constrains.get(column).isValid(value.doubleValue());
+                //System.out.println(index + " " + column + " " + this.getValueAt(column-index.length, index));
+                Object obj=this.getValueAt(column-index.length, index).getClass().getTypeName();
+                if(obj.getClass().getTypeName()=="Integer")cellStatus=this.constrains.get(column).isValid((Integer)obj);
+                else if(obj.getClass().getTypeName()=="Double")cellStatus=this.constrains.get(column).isValid((Double)obj);
                 if(!cellStatus) rowStatus=false;
             }
         }

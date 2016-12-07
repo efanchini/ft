@@ -39,8 +39,6 @@ public class CalibrationData {
         DC.add(0, 0, key, obj);
         j++;
     }
-    
-    
     return DC;
 }    
     

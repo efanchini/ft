@@ -69,7 +69,6 @@ public class ExtendedFADCFitter implements IFADCFitter {
     }
 
     public void fit(DetectorChannel dc) {
-        //System.out.println("Erica caspiterina0");
         short[] pulse = dc.getPulse();
         double ped    = 0.0;
         double noise  = 0;
@@ -129,67 +128,9 @@ public class ExtendedFADCFitter implements IFADCFitter {
                 time_7 = ((halfMax - a0)/(a1-a0) + t0)* nsPerSample;
             }
         }
-        //System.out.println("Erica caspiterina55555555555");
    }
     
-//    public void fitException(DetectorChannel dc, int ped_i, int ped_f, int pul_i, int pul_f) {
-//        System.out.println("Erica fitexception:");
-//        short[] pulse = dc.getPulse();
-//        double ped    = 0.0;
-//        double noise  = 0;
-//        double wmax   = 0;
-//        double pmax   = 0;
-//        int    tcross = 0; 
-//        // calculate pedestal means and noise
-//        for (int bin = ped_i; bin < ped_i; bin++) {
-//            ped += pulse[bin];
-//            noise += pulse[bin] * pulse[bin];
-//        }
-//        pedestal = ped / (ped_i - ped_i);
-//        rms = LSB * Math.sqrt(noise / (ped_i - ped_i) - pedestal * pedestal);
-//        // determine waveform max
-//        for (int bin=0; bin<pulse.length; bin++) {
-//            if(pulse[bin]>wmax) wmax=pulse[bin];
-//        }
-//        wave_max=wmax;
-//        // find threshold crossing in pulse region: this determines mode-3 time (4 ns resolution)
-//        for (int bin=pul_i; bin<pul_i; bin++) {
-//            if(pulse[bin]>pedestal+threshold) {
-//                tcross=bin;
-//                break;
-//            }
-//        }
-//        thresholdCrossing=tcross;
-//        time_3=tcross*nsPerSample;
-//        // find pulse max
-//        for (int bin=thresholdCrossing; bin<pulse.length; bin++) { 
-//            if (pulse[bin+1]<pulse[bin]){ 
-//                pmax=pulse[bin];
-//                break; 
-//            }
-//        }
-//        // calculating high resolution time    
-//        double halfMax = (pmax+pedestal)/2;
-//        time_7 = time_3;
-//        int t0 = -1;
-//        if(tcross>0) { 
-//            for (int bin=tcross-1; bin<pul_i; bin++) {
-//                if (pulse[bin]<=halfMax && pulse[bin+1]>halfMax) {
-//                    t0 = bin;
-//                    break;
-//                }
-//            }
-//            if(t0>-1) { 
-//                int t1 = t0 + 1;
-//                int a0 = pulse[t0];
-//                int a1 = pulse[t1];
-//                   //final double slope = (a1 - a0); // units = ADC/sample
-//                   //final double yint = a1 - slope * t1;  // units = ADC 
-//                time_7 = ((halfMax - a0)/(a1-a0) + t0)* nsPerSample;
-//            }
-//        }
-//   }
-    
+
     public void fit(DetectorChannel dc, double t) {
         
         this.setThreshold(t);

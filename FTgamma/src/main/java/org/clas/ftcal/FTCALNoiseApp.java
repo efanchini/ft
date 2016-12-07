@@ -42,12 +42,13 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         this.addCanvas("Noise");
         this.getCanvas("Noise").divideCanvas(2, 2);
         this.addFields("Status", "Pedestal Mean", "Pedestal RMS", "Noise", "Noise RMS");
-        this.getParameter(0).setRanges(0.0,0.0,1.0,6.0);
-        this.getParameter(1).setRanges(100.,300.,1.0,400.0);
-        this.getParameter(2).setRanges(0.0,10.0,10.0,10.0);
+        this.getParameter(0).setRanges(0, 0,1,5);       //status//
+        this.getParameter(1).setRanges(0.0,11000.0,1.0,11000.0);
+        this.getParameter(2).setRanges(0.0,11000.0,1.0,11000.0);
         //this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);//old preamps  Noise parameters
         //this.getParameter(3).setRanges(1.0,1.05,1.0,2.0);//new preamps  Noise parameters
-        this.getParameter(3).setRanges(3.0,500.0,1.0,2.0);//Noise parameters for simulated data to be changed by hand //
+        this.getParameter(3).setRanges(0.0,11000.0,1.0,11000.0);//Noise parameters for simulated data to be changed by hand //
+        this.getParameter(4).setRanges(0.0,11000.0,1.0,11000.0);
         this.initCollections();
     }
 
@@ -80,7 +81,7 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
             int key = counter.getDescriptor().getComponent();
             if(H_PED.hasEntry(0, 0, key)) {
                 this.getFitter().fit(counter.getChannels().get(0),this.getDetector().getThresholds().get(0, 0, key)); //normale
-                H_PED.get(0,0,key).fill(this.getFitter().getPedestal());
+                H_PED.get(0, 0,key).fill(this.getFitter().getPedestal());
                 H_NOISE.get(0, 0, key).fill(this.getFitter().getRMS());
             }
         }
@@ -92,7 +93,7 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         for(int key : adc.getComponents(0, 0)) {
             if(adc.hasEntry(0, 0, key)){
              charge=(adc.get(0, 0, key)*LSB*nsPerSample/50);
-             H_PED.get(0,0,key).fill(adc.get(0, 0, key));
+             H_PED.get(0, 0,key).fill(adc.get(0, 0, key));
              H_NOISE.get(0, 0, key).fill(adc.get(0, 0, key));
             }
         }
@@ -102,8 +103,8 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
     public void updateCanvas(int keySelect) {
         int ipointer=0;
         for(int key : this.getDetector().getDetectorComponents()) {
-            pedestalMEAN[ipointer] = H_PED.get(0,0,key).getMean();
-            pedestalRMS[ipointer]  = H_PED.get(0,0,key).getRMS();
+            pedestalMEAN[ipointer] = H_PED.get(0, 0,key).getMean();
+            pedestalRMS[ipointer]  = H_PED.get(0, 0,key).getRMS();
             noiseMEAN[ipointer]    = H_NOISE.get(0, 0, key).getMean();
             noiseRMS[ipointer]     = H_NOISE.get(0, 0, key).getRMS();
             ipointer++;
@@ -150,7 +151,7 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
                 case 0: 
                 {
                     //System.out.println("ERICA NOISE: "+key+"  "+this.H_NOISE.get(0, 0, key).getMean()+"  "+this.getParameter(3).getParMin()+" "+this.getParameter(3).getParMax());
-                    if     (this.getParameter(3).isValid(this.H_NOISE.get(0, 0, key).getMean())){
+                    if (this.getParameter(3).isValid(this.H_NOISE.get(0, 0, key).getMean())){
                         value=0;
                     }//ok
                     else if(this.getParameter(3).isLow(this.H_NOISE.get(0, 0, key).getMean()) || this.H_NOISE.get(0, 0, key).getEntries()==0){

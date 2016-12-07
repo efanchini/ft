@@ -209,7 +209,8 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
    
  private void initTable() {
      // SummaryTable //
-        summaryTable = new FTHashTable(3,"Pedestal:d","Noise:i","N. Events:i","<E>:d","\u03C3(E):d","\u03C7\u00B2(E):d","<T>:d","\u03C3(T):d","Status:i");
+        summaryTable = new FTHashTable(3,"Pedestal:d","Noise:d","N. Events:i","<E>:d","\u03C3(E):d","\u03C7\u00B2(E):d","<T>:d","\u03C3(T):d",
+                "Status:i");
         double[] summaryInitialValues = {-1, -1, -1, -1, -1, -1, -1, -1, -1};
         int irow=0;
         keyToRow = new int[viewFTCAL.getComponentMaxCount()+1];
@@ -307,6 +308,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
         this.ftNoise.resetCollections();
         this.ftGamma.resetCollections();
         this.ftCompare.resetCollections();
+        this.view.repaint();
         this.resetGammaSel();
         
     }
@@ -336,13 +338,12 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
     public void processDecodedSimEvent(DetectorCollection<Double> adc, DetectorCollection<Double> tdc) {
         nProcessed++;
         //if(nProcessed>0)freezeGammaSel();
+        this.view.repaint();
         this.ftEvent.addSimEvent(adc);
         this.ftNoise.addSimEvent(adc);
         this.ftGamma.addSimEvent(adc, tdc);
         this.ftEvent.updateCanvas(keySelect);
         this.view.repaint();
-        
-  
     }    
     
     public void detectorSelected(DetectorDescriptor desc) {
@@ -401,6 +402,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
         for(int key : viewFTCAL.getDetectorComponents()) {
             String pedestal = String.format ("%.1f", ftNoise.getFieldValue("Pedestal Mean",key));
             String noise    = String.format ("%.2f", ftNoise.getFieldValue("Noise",key));
+            //String nev      = String.format ("%d",   ftGamma.getFieldValue("Occupancy", key));
             String nev      = String.format ("%d",   (int)ftGamma.getFieldValue("Occupancy", key));
             String mips     = String.format ("%.2f", ftGamma.getFieldValue("<E>", key));
             String emips    = String.format ("%.2f", ftGamma.getFieldValue("\u03C3(E)", key));
@@ -408,16 +410,19 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
             String time     = String.format ("%.2f", ftGamma.getFieldValue("<T>", key));
             String stime    = String.format ("%.2f", ftGamma.getFieldValue("\u03C3(T)", key));
             String status   = String.format ("%d",   (int)ftNoise.getFieldValue("Status", key));
+            //String status   = String.format ("%d",   ftNoise.getFieldValue("Status", key));
 
             summaryTable.setValueAtAsDouble(0, Double.parseDouble(pedestal), 1, 1, key);
             summaryTable.setValueAtAsDouble(1, Double.parseDouble(noise)   , 1, 1, key);
-            summaryTable.setValueAtAsDouble(2, Double.parseDouble(nev)     , 1, 1, key);
+            summaryTable.setValueAtAsDouble(2, Integer.parseInt(nev)       , 1, 1, key);
+            //summaryTable.setValueAtAsDouble(2, Double.parseDouble(nev)     , 1, 1, key);
             summaryTable.setValueAtAsDouble(3, Double.parseDouble(mips)    , 1, 1, key);
             summaryTable.setValueAtAsDouble(4, Double.parseDouble(emips)   , 1, 1, key);
             summaryTable.setValueAtAsDouble(5, Double.parseDouble(chi2)    , 1, 1, key);
             summaryTable.setValueAtAsDouble(6, Double.parseDouble(time)    , 1, 1, key);
             summaryTable.setValueAtAsDouble(7, Double.parseDouble(stime)   , 1, 1, key);  
-            summaryTable.setValueAtAsDouble(8, Double.parseDouble(status)  , 1, 1, key);  
+            //summaryTable.setValueAtAsDouble(8, Double.parseDouble(status)  , 1, 1, key);  
+            summaryTable.setValueAtAsDouble(8, Integer.parseInt(status)  , 1, 1, key);  
         }
     }
 
@@ -425,11 +430,13 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
     private void updateCCDBTable() {
         System.out.println("ERICA CCDB2 TABLE");
         for(int key : viewFTCAL.getDetectorComponents()) {
-            String status   = String.format ("%d", (int) ftNoise.getFieldValue("Status", key));
+            //String status   = String.format ("%.1f", ftNoise.getFieldValue("Status", key));
+            String status   = String.format ("%d", (int)ftNoise.getFieldValue("Status", key));
             String pedestal = String.format ("%.1f", ftNoise.getFieldValue("Pedestal Mean",key));
             String ped_rms  = String.format ("%.1f", ftNoise.getFieldValue("Pedestal RMS",key));
             String noise    = String.format ("%.2f", ftNoise.getFieldValue("Noise",key));
             String noise_rms= String.format ("%.2f", ftNoise.getFieldValue("Noise RMS",key));
+            //String nev      = String.format ("%f", ftGamma.getFieldValue("Occupancy", key));
             String nev      = String.format ("%d",   (int) ftGamma.getFieldValue("Occupancy", key));
             String mips     = String.format ("%.2f", ftGamma.getFieldValue("<E>", key));
             String emips    = String.format ("%.2f", ftGamma.getFieldValue("\u03C3(E)", key));
@@ -442,12 +449,14 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
             ccdbTable.setValueAtAsDouble(1, Double.parseDouble(ped_rms)   , 1, 1, key);
             ccdbTable.setValueAtAsDouble(2, Double.parseDouble(noise)     , 1, 1, key);
             ccdbTable.setValueAtAsDouble(3, Double.parseDouble(noise_rms) , 1, 1, key);
+            //ccdbTable.setValueAtAsDouble(4, Double.parseDouble(nev)       , 1, 1, key);
             ccdbTable.setValueAtAsDouble(4, Integer.parseInt(nev)         , 1, 1, key);
             ccdbTable.setValueAtAsDouble(5, Double.parseDouble(mips)      , 1, 1, key);
             ccdbTable.setValueAtAsDouble(6, Double.parseDouble(emips)     , 1, 1, key);
             ccdbTable.setValueAtAsDouble(7, Double.parseDouble(chi2)      , 1, 1, key);
             ccdbTable.setValueAtAsDouble(8, Double.parseDouble(time)      , 1, 1, key);
             ccdbTable.setValueAtAsDouble(9, Double.parseDouble(stime)     , 1, 1, key); 
+            //ccdbTable.setValueAtAsDouble(10,Double.parseDouble(status)    , 1, 1, key);  
             ccdbTable.setValueAtAsDouble(10,Integer.parseInt(status)      , 1, 1, key);  
             ccdbTable.setValueAtAsDouble(11,Double.parseDouble(thr)       , 1, 1, key);
             
@@ -511,13 +520,13 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
 
         
         String[] text3 = new String[1];
-        text3[0]="Signal Thrd (fadc ch):";
+        text3[0]="Signal Thrd (MeV):";
         CustomPanel cp3 = new CustomPanel(text3.length, text3);
         tabbedPane.addTab("FTCal Signal Thr", cp3);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_3);
         
         String[] text4 = new String[1];
-        text4[0]="Signal Thr (pC)";
+        text4[0]="Signal Thr (MeV)";
         CustomPanel cp4 = new CustomPanel(text4.length, text4);
         tabbedPane.addTab("Simulated integrated event", cp4);
         tabbedPane.setMnemonicAt(0, KeyEvent.VK_4); 

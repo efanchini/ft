@@ -11,6 +11,7 @@ import org.clas.tools.FTApplication;
 import org.clas.tools.FTDetector;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.DetectorCounter;
+import org.root.attr.ColorPalette;
 import org.root.histogram.H1D;
 
 /**
@@ -27,10 +28,6 @@ public class FTCALEventApp extends FTApplication {
     // decoder related information
     int nProcessed = 0;
     Boolean realflag=true;
-    
-    //Color palette renormalization //
-    private double smin=5.0;
-    private double paintweight =255.0;
     
        // analysis realted info //
     double nsPerSample=4;
@@ -54,7 +51,6 @@ public class FTCALEventApp extends FTApplication {
         H_WAVE   = this.getData().addCollection(new H1D("Wave", 1000, 0.0, 5000.0),"Energy (MeV)","Counts",5,"H_WAVE");
         H_WMAX   = new H1D("WMAX", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
         H_TCROSS = new H1D("TCROSS", this.getDetector().getComponentMaxCount(), 0, this.getDetector().getComponentMaxCount());
-        
     }
     
     public void addEvent(List<DetectorCounter> counters) {   
@@ -104,6 +100,7 @@ public class FTCALEventApp extends FTApplication {
     @Override
     public Color getColor(int key) {
         Color col = new Color(100, 100, 100);
+        ColorPalette palette = new ColorPalette();
         if(this.realflag){
             if(H_WMAX.getBinContent(key)>this.getDetector().getThresholds().get(0, 0, key)) {
                 if(H_TCROSS.getBinContent(key)>0) {
@@ -112,22 +109,17 @@ public class FTCALEventApp extends FTApplication {
                 else {
                   col = new Color(200, 0, 200);
              }
-            }
+            }else col = new Color(100, 100, 100);
            }
         else{
-            paintweight =  (255.0/(this.H_WAVE.get(0, 0, key).getAxis().max()));
-            double r = (H_WMAX.getBinContent(key)*paintweight);
-            double g = (r-((int)r))*255;
-            double b = (g-((int)g))*255;
-            //System.out.println("EVT "+key+"  "+paintweight+"  "+r+"  "+g+" "+b );
             if(this.H_WAVE.get(0, 0, key).getEntries()>0){
-                if(r>255)col = new Color(255, 255, 255);
-                else if(H_WMAX.getBinContent(key)>this.smin)col = new Color((int)r, (int)g, (int)b); 
-                
-            }       
+                col = palette.getColor3D(H_WMAX.getBinContent(key), 12000, true);
+            }
+            else col = new Color(100, 100, 100);
         }
         return col;
     }
-    
+  
+   
     
 }

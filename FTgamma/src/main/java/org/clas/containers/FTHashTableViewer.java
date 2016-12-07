@@ -59,8 +59,7 @@ public class FTHashTableViewer extends JPanel {
                 if(listeners.size()>0){
                     int row   =  table.getSelectedRow();
                     int nindex = hashTable.getIndexCount();
-                    int[] index = new int[nindex];
-                    
+                    int[] index = new int[nindex]; 
                 }
             }
         });

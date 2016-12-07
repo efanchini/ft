@@ -29,7 +29,7 @@ public class FTDataSet {
         for(int key : this.ft.getDetectorComponents()) {
             H1D histoComponent = histo.histClone(histo.getName() + "_" + key);
             histoComponent.setTitle("Component " + key + this.ft.getComponentName(key));
-            h.add(0,0,key,histoComponent);
+            h.add(0, 0,key,histoComponent);
         }
         this.dc.add(h);
         this.dclabel.add(listlabel);
@@ -45,7 +45,7 @@ public class FTDataSet {
             histoComponent.setYTitle(YTitle);
             histoComponent.setFillColor(Col);
             histoComponent.setName(histo.getName() + "_" + key);
-            h.add(0,0,key,histoComponent);
+            h.add(0, 0,key,histoComponent);
             }
         this.dc.add(h);
         this.dclabel.add(listlabel);
@@ -55,7 +55,7 @@ public class FTDataSet {
     public DetectorCollection addCollection(F1D funct, String listlabel) {
         DetectorCollection f = new DetectorCollection();
         for(int key : this.ft.getDetectorComponents()) {
-            f.add(0,0,key,funct);
+            f.add(0, 0,key,funct);
         }
         this.dc.add(f);
         this.dclabel.add(listlabel);
@@ -65,7 +65,7 @@ public class FTDataSet {
     public DetectorCollection addCollection(F1D funct, String name, String listlabel) {
         DetectorCollection f = new DetectorCollection();
         for(int key : this.ft.getDetectorComponents()) {
-            f.add(0,0,key,funct);
+            f.add(0, 0,key,funct);
         }
         this.dc.add(f);   
         this.dclabel.add(listlabel);
@@ -77,7 +77,7 @@ public class FTDataSet {
         for(int key : this.ft.getDetectorComponents()) {
             GraphErrors graphComponent = new GraphErrors();
             graphComponent.setName(graf.getName());
-            g.add(0,0,key,graphComponent);
+            g.add(0, 0,key,graphComponent);
         }
         this.dc.add(g);
         this.dclabel.add(listlabel);

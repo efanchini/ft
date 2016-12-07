@@ -103,8 +103,8 @@ public class FitParametersFile {
     public void CCDBFile(String filename, FTHashTable table) {     
         // File Format //
         // Da scrivere in diverse tabelle//
-        // Sector Layer Component Pedestal Ped_Rms Noise Noise_Rms Energy Sigma Threshold Ch_Status Preamp-Gain  Photosensor-Gain //
-        int preampG = (int)(1800/2.7);// Preamp-Gain
+        // Sector Layer Component Pedestal Ped_Rms Noise Noise_Rms N.Events, Energy, E Sigma, Chi, Time, rms,  Ch_Status, Threshold Preamp-Gain  Photosensor-Gain //
+        int preampG = 670;//(int)(1800/2.7);// Preamp-Gain
         int pmtG =150;// Photosensor-Gain
         
 
@@ -115,12 +115,12 @@ public class FitParametersFile {
             PrintWriter fout_status;// Status table //
             fout_status = new PrintWriter("./ftcal_status.txt");
             
+            PrintWriter fout_timeoffset;// Time offset table //
+            fout_timeoffset = new PrintWriter("./ftcal_time_offset.txt");
+            
             // Da implementare //
 //            PrintWriter fout_noise;// Noise table //
-//            fout_noise = new PrintWriter("./ftcal_noise.txt");
-//            
-//            PrintWriter fout_timeoffset;// Time offset table //
-//            fout_timeoffset = new PrintWriter("./ftcal_time_offset.txt");
+//            fout_noise = new PrintWriter("./ftcal_noise.txt");          
 //            
 //            PrintWriter fout_q2e;// Chareg to energy table //
 //            fout_q2e = new PrintWriter("./ftcal_charge_to_energy.txt");
@@ -128,7 +128,6 @@ public class FitParametersFile {
             String col="";
             //fout.printf("Sector \t Layer \t Component \t  Pedestal \t RMS \t Noise \t RMS \t <E> \t \u03C3(E) \t Threshold \t Status \t Preamp-Gain \t Photosensor-Gain");
             for(int r=0; r<table.getRowCount(); r++){
-                
                 if(r==0){
                     for(int c=0; c<table.getColumnCount(); c++){
                         //System.out.println("PARAMETERs name: "+table.getColumnName(c));
@@ -136,23 +135,36 @@ public class FitParametersFile {
                         //if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
                        //|| col.equals("<E>") || col.equals("\u03C3(E)")) 
                             fout.printf(col+"\t");
+                            if(col.equals("S") || col.equals("L") || col.equals("C")|| col.equals("Status"))fout_status.printf(col+"\t");
+                            if(col.equals("S") || col.equals("L") || col.equals("C")|| col.equals("<T>")|| col.equals("\u03C3(T)"))fout_timeoffset.printf(col+"\t");
                     }
                     fout.printf("Preamp-Gain \t Photosensor-Gain \n");
+                    fout_status.printf("\n");
+                    fout_timeoffset.printf("\n");
                 }
+                
                 for(int c=0; c<table.getColumnCount(); c++){
                     col=table.getColumnName(c);
-                    //if(col.equals("S") || col.equals("L") || col.equals("C") || col.equals("Pedestal") || col.equals("Noise")
-                      // || col.equals("<E>") || col.equals("\u03C3(E)")){
-                        fout.printf(table.getValueAt(r, c)+"\t");
-                        //System.out.println("PIPPO "+c+" "+col+" "+table.getValueAt(r, c));
-                   // }
+                    fout.printf(table.getValueAt(r, c)+"\t");
+                    if(col.equals("S") || col.equals("L") || col.equals("C")){
+                         fout_status.printf(table.getValueAt(r, c)+"\t");
+                         fout_timeoffset.printf(table.getValueAt(r, c)+"\t");
+                     }
+                   if(col.equals("Status")){
+                       Double pp =Double.parseDouble(table.getValueAt(r, c).toString());
+                       fout_status.printf(pp.intValue()+"\t");
+                   }
+                   if(col.equals("<T>")|| col.equals("\u03C3(T)"))fout_timeoffset.printf(table.getValueAt(r, c)+"\t");
                 }
                 fout.printf(preampG+"\t"+ pmtG +"\n");
+                fout_status.printf("\n");
+                fout_timeoffset.printf("\n");
+                
                 }
             fout.close();
             fout_status.close();
             //fout_noise.close();
-            //fout_timeoffset.close();
+            fout_timeoffset.close();
             //fout_q2e.close();
             
             System.out.println("FitParametersFile => CCDB file written: "+filename);

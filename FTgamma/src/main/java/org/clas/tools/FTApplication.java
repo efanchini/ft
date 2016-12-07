@@ -243,8 +243,8 @@ public class FTApplication implements ActionListener {
         
         for(int key : this.detector.getDetectorComponents()) {
             if(h.hasEntry(0, 0, key)) {
-                book.add(h.get(0,0,key)," ");
-                book.add(f.get(0,0,key),"same"); 
+                book.add(h.get(0, 0,key)," ");
+                book.add(f.get(0, 0,key),"same"); 
             }
          }
         
