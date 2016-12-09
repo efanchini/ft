@@ -43,11 +43,11 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
         this.getCanvas("Noise").divideCanvas(2, 2);
         this.addFields("Status", "Pedestal Mean", "Pedestal RMS", "Noise", "Noise RMS");
         this.getParameter(0).setRanges(0, 0,1,5);       //status//
-        this.getParameter(1).setRanges(0.0,11000.0,1.0,11000.0);
-        this.getParameter(2).setRanges(0.0,11000.0,1.0,11000.0);
+        this.getParameter(1).setRanges(2.0,11000.0,1.0,11000.0);
+        this.getParameter(2).setRanges(2.0,11000.0,1.0,11000.0);
         //this.getParameter(3).setRanges(1.0,1.5,1.0,2.0);//old preamps  Noise parameters
         //this.getParameter(3).setRanges(1.0,1.05,1.0,2.0);//new preamps  Noise parameters
-        this.getParameter(3).setRanges(0.0,11000.0,1.0,11000.0);//Noise parameters for simulated data to be changed by hand //
+        this.getParameter(3).setRanges(2.0,11000.0,1.0,11000.0);//Noise parameters for simulated data to be changed by hand //
         this.getParameter(4).setRanges(0.0,11000.0,1.0,11000.0);
         this.initCollections();
     }
@@ -165,13 +165,13 @@ public class FTCALNoiseApp extends FTApplication implements ActionListener {
                     }//other issue
                     break;
                 }
-                case 1: value = this.H_PED.get(0, 0, key).getMean(); 
+                case 1: value = this.H_PED.get(0, 0, key).getMean(); // to be changed
                     break;
-                case 2: value = this.H_PED.get(0, 0, key).getRMS();
+                case 2: value = this.H_PED.get(0, 0, key).getRMS();// to be changed
                     break;
-                case 3: value = this.H_NOISE.get(0, 0, key).getMean();
+                case 3: value = this.H_NOISE.get(0, 0, key).getMean();// to be changed
                     break;
-                 case 4: value = this.H_NOISE.get(0, 0, key).getRMS();
+                 case 4: value = this.H_NOISE.get(0, 0, key).getRMS();// to be changed
                     break;   
                 default: value =-1;
                     break;

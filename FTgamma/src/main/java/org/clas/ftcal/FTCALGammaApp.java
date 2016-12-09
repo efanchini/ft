@@ -6,6 +6,7 @@
 package org.clas.ftcal;
 
 import java.awt.Color;
+import java.io.IOException;
 import static java.lang.Math.abs;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
@@ -54,7 +55,7 @@ public class FTCALGammaApp extends FTApplication {
     double[] detectorIDs;
     double[] timeCROSS;
     double[] timeHALF;
-    //double[] timeMEAN;
+    
     
     String compcanvas="";
     private int SelectionType=1;// da cambiare
@@ -75,11 +76,14 @@ public class FTCALGammaApp extends FTApplication {
     double timeshift =0;// ns
     double crystal_size = 15;//mm
     double charge2e = 15.3/6.005; //MeV
+    double crystal_length = 200;//mm                                                                                            
+    double shower_depth = 45;                                                                                                   
+    double light_speed = 150; //cm/ns     
     CustomizeFit cfit = new CustomizeFit();
     FTCalGammaSelection gammasel;
     private ArrayList selOpt;
     
-    public FTCALGammaApp(FTDetector d) {
+    public FTCALGammaApp(FTDetector d) throws IOException {
         super(d);
         this.setName("Energy");
         this.addCanvas("Energy");
@@ -144,11 +148,11 @@ public class FTCALGammaApp extends FTApplication {
         return objout;
        
    }
-    private void initCollections() {
+    private void initCollections() throws IOException {
 
         H_fADC          = new H1D("fADC", 120, 0.0, 12.0);// Histo with Max energy evt
         H_SIM_fADC      = this.getData().addCollection(new H1D("fADC", 100, 0.0, 100.0),"fADC Sample","fADC Counts",3,"H_SIM_fADC");
-        ht_mean         = new H1D("H_TimeMean",512,-2.0,15.0);
+        ht_mean         = new H1D("H_TimeMean",512,-10.0,15.0);
         F_time_mean     = new F1D("gaus",-10.0, 30.0);
         H_SIM_CHARGE    = this.getData().addCollection(new H1D("Charge", 200, 0.0, 2000.0),"Energy (MeV)","Counts",2,"H_SIM_CHARGE");
         H_SIM_VMAX      = this.getData().addCollection(new H1D("VMax",   120, 0.0, 12.0), "Energy (GeV)", "Counts", 2,"H_SIM_VMAX");
@@ -156,7 +160,7 @@ public class FTCALGammaApp extends FTApplication {
         
         if(this.SelectionType==1){//Simulated data
             H_SIM_TCROSS  = this.getData().addCollection(new H1D("T_TRIG",330, -30.0, 80.0), "Time (ns)", "Counts", 5, "H_SIM_TCROSS");
-            H_SIM_THALF   = this.getData().addCollection(new H1D("T_HALF", 60, -5.0, 15.0), "Time (ns)", "Counts", 5,"H_SIM_THALF");
+            H_SIM_THALF   = this.getData().addCollection(new H1D("T_HALF", 270, -15.0, 15.0), "Time (ns)", "Counts", 5,"H_SIM_THALF");
          
         }
         else{
@@ -180,6 +184,10 @@ public class FTCALGammaApp extends FTApplication {
             detectorIDs[i]=this.getDetector().getIDArray()[i]; 
         }
         gammasel = new FTCalGammaSelection(this.getDetector());
+        
+        //test
+        //FitParametersFile ff = new FitParametersFile(); 
+        //ff.readCCDBFiles();
     }
 
     public void reloadCollections(){
@@ -316,14 +324,16 @@ public class FTCALGammaApp extends FTApplication {
         double hMean = htime.getAxis().getBinCenter(htime.getMaximumBin());
         double hRMS  = 2; //ns
         
-        double rangeMin = -0.5; 
-        double rangeMax = (hMean + (1*hRMS));     
+        double rangeMin = (hMean - (0.8*hRMS)); 
+        double rangeMax = (hMean + (0.2*hRMS));     
         F_TimeGauss.add(0, 0, key, new F1D("gaus", rangeMin, rangeMax));
         F_TimeGauss.get(0, 0, key).setName("Gaus_"+key);
         F_TimeGauss.get(0, 0, key).setParameter(0, hAmp);
         F_TimeGauss.get(0, 0, key).setParLimits(0, hAmp*0.8, hAmp*1.2);
         F_TimeGauss.get(0, 0, key).setParameter(1, hMean);
-        F_TimeGauss.get(0, 0, key).setParameter(2, 0.5);
+        Double pm = (hMean*3.)/100.0;
+        F_TimeGauss.get(0, 0, key).setParLimits(1, hMean-pm, hMean+(pm));
+        F_TimeGauss.get(0, 0, key).setParameter(2, 0.2);
         F_TimeGauss.get(0, 0, key).setParLimits(2, 0.1*hRMS, 0.8*hRMS);
     }    
 
@@ -341,7 +351,7 @@ public class FTCALGammaApp extends FTApplication {
             if(H_SIM_CHARGE.get(0, 0, key).getEntries()>100) {
                 //this.fitLandau(key);
             }
-            if(H_SIM_THALF.get(1,1,key).getEntries()>0) {    
+            if(H_SIM_THALF.get(0, 0, key).getEntries()>0) {    
               this.fitTime(key);
             } 
         }     
@@ -391,7 +401,7 @@ public class FTCALGammaApp extends FTApplication {
     }
     
     private H1D updateSimTimeFitResults(DetectorCollection<H1D> hist, DetectorCollection<F1D> fct){ 
-        H1D ht = new H1D("Ht",512,-1.0,15.0);
+        H1D ht = new H1D("Ht",512,-10.0,15.0);
         for(int key: hist.getComponents(0, 0)){
             if(hist.get(0, 0, key).getEntries()>20){
                 this.fitTime(key);
@@ -476,10 +486,10 @@ public class FTCALGammaApp extends FTApplication {
     private double timecorrection(double time, int key){
         double timec =0.0;
         double gamma=1.0;
-        double height = ((abs(this.getDetector().getIdY(key))*this.crystal_size)-(this.crystal_size/2.0))*1.0E-3;//meters
-        double distcor = sqrt(pow(this.ftcalDistance,2)+pow(height,2));
+        double radius = sqrt(pow(this.getDetector().getIdX(key)-0.5,2.0)+pow(this.getDetector().getIdY(key)-0.5,2.0))*this.crystal_size*1.0E-3;//meters
+        double distcor = sqrt(pow(this.ftcalDistance+shower_depth/1000.,2)+pow(radius,2));
         double tof = (distcor/(gamma*3.0)*1.0E1); //ns
-        timec = (((time*nsPerSample)/100.0) -(this.startTime + tof))-this.timeshift;
+        timec = (((time*nsPerSample)/100.0) -(this.startTime + (crystal_length-shower_depth)/light_speed + tof))-this.timeshift;
         return timec;
     }
     
@@ -504,7 +514,6 @@ public class FTCALGammaApp extends FTApplication {
                 H_SIM_VMAX.get(0, 0, key).fill((charge/1000.0));
                 if(this.gammasel.EnergyEvMax.get(0, 0, key))H_fADC.fill(charge/1000.0);
                 if(sel){
-                    //System.out.println("Erica sel: "+sel+"  "+key+"  "+charge+"  "+time);
                     H_SIM_CHARGE.get(0, 0, key).fill(charge);
                     H_SIM_THALF.get(0, 0, key).fill(time);  
                 }
@@ -540,7 +549,6 @@ public class FTCALGammaApp extends FTApplication {
         this.getCanvas("Energy").cd(3);
         if(H_SIM_CHARGE.hasEntry(0, 0, keySelect)) {
             H1D hcharge = H_SIM_CHARGE.get(0, 0,keySelect);
-             this.getCanvas("Energy").getPad(3).setLogY(true);
             this.getCanvas("Energy").draw(hcharge,"S");
             if(hcharge.getEntries()>0) {
                 //fitLandau(keySelect);
@@ -554,17 +562,7 @@ public class FTCALGammaApp extends FTApplication {
     private void timeTabSim(int keySelect){
               // Time
         int ipointer = 0;
-        for(int key : this.getDetector().getDetectorComponents()) {
-            timeHALF[ipointer]     = H_SIM_THALF.get(0, 0, key).getMean();
-            ipointer++;
-        }
-        GraphErrors  G_THALF = new GraphErrors(detectorIDs,timeHALF);
-        G_THALF.setTitle(" "); //  title
-        G_THALF.setXTitle("Crystal ID"); // X axis title
-        G_THALF.setYTitle("Mode-7 Time (ns)");   // Y axis title
-        G_THALF.setMarkerColor(5); // color from 0-9 for given palette
-        G_THALF.setMarkerSize(5);  // size in points on the screen
-        G_THALF.setMarkerStyle(1); // Style can be 1 or 2
+        
         this.getCanvas("Time").cd(0);
         H1D ht = updateSimTimeFitResults(this.H_SIM_THALF, this.F_TimeGauss);
         this.getCanvas("Time").draw(ht,"S");
@@ -577,6 +575,17 @@ public class FTCALGammaApp extends FTApplication {
         ht.fit(F_time_mean,"LQ");
         this.getCanvas("Time").draw(F_time_mean,"sameS");
     
+        for(int key : this.getDetector().getDetectorComponents()) {
+            timeHALF[ipointer]     = this.F_TimeGauss.get(0, 0, key).getParameter(1);
+            ipointer++;
+        }
+        GraphErrors  G_THALF = new GraphErrors(detectorIDs,timeHALF);
+        G_THALF.setTitle(" "); //  title
+        G_THALF.setXTitle("Crystal ID"); // X axis title
+        G_THALF.setYTitle("Timing (ns)");   // Y axis title
+        G_THALF.setMarkerColor(5); // color from 0-9 for given palette
+        G_THALF.setMarkerSize(5);  // size in points on the screen
+        G_THALF.setMarkerStyle(1); // Style can be 1 or 2
         this.getCanvas("Time").cd(1);
         this.getCanvas("Time").draw(G_THALF);
         this.getCanvas("Time").cd(2);
@@ -600,8 +609,8 @@ public class FTCALGammaApp extends FTApplication {
         // Time
         int ipointer = 0;
         for(int key : this.getDetector().getDetectorComponents()) {
-            timeCROSS[ipointer]    = H_SIM_TCROSS.get(0, 0, key).getMean();
-            timeHALF[ipointer]     = H_SIM_THALF.get(0, 0, key).getMean();
+            timeCROSS[ipointer]    = this.F_TimeGauss.get(0, 0, key).getParameter(1);
+            timeHALF[ipointer]     = this.F_TimeGauss.get(0, 0, key).getParameter(1);
             ipointer++;
         }
         GraphErrors  G_TCROSS = new GraphErrors(detectorIDs,timeCROSS);
@@ -652,9 +661,9 @@ public class FTCALGammaApp extends FTApplication {
                     break;
                 case 3: value = this.H_SIM_CHI2.getBinContent(key);//cambiare
                     break;
-                case 4: value=this.H_TIME_MEAN.getBinContent(key);
+                 case 4: value = this.F_TimeGauss.get(0, 0, key).getParameter(1);
                     break;
-                case 5: value = this.H_TIME_SIGMA.getBinContent(key);
+                 case 5: value = this.F_TimeGauss.get(0, 0, key).getParameter(2);   
                     break;
                 case 6: value = this.signalThr*this.LSB;
                     break;

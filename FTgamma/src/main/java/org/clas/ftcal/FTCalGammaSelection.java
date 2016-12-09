@@ -28,10 +28,9 @@ public class FTCalGammaSelection extends FTApplication{
     }
     
   public Boolean SimCosmicEvtSel(int key, Double charge, Double tdc, double simSignalThr){
-        //System.out.println("SimCosmicEvtSel charge:"+charge+" tdc: "+tdc+" thr:"+simSignalThr);
         Boolean flagsel=false;
-        if(charge>simSignalThr && tdc>0.0) flagsel=true;
-        //System.out.println("SimCosmicEvtSel charge:"+charge+" tdc: "+tdc+" thr:"+simSignalThr+" flag:"+flagsel);
+        //if(charge>simSignalThr && tdc>0.0) flagsel=true;
+        if(charge>simSignalThr) flagsel=true;
         return flagsel;
     }  
     

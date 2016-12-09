@@ -11,6 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -123,7 +124,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
         this.detectorPanel = detectorPanel;
     }
     
-    public void initApps() {
+    public void initApps() throws IOException {
         
         // event
         ftEvent = new FTCALEventApp(viewFTCAL);
@@ -224,6 +225,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
             summaryTable.addConstrain(7+3, ftGamma.getParameter("\u03C3(T)").getParMin(), ftGamma.getParameter("\u03C3(T)").getParMax()); 
             summaryTable.addConstrain(8+3, ftNoise.getParameter("Status").getParMin(), ftNoise.getParameter("Status").getParMax());
             //System.out.println("Erica tabkle: "+ftNoise.getParameter("Status").getParMin()+"  "+ftNoise.getParameter("Status").getParMax()+"  "+ftNoise.getParameter(0).getName());
+            //System.out.println("TAB component: "+component);
             irow++;
         }
         canvasTable = new FTHashTableViewer(summaryTable);
@@ -243,6 +245,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
         for (int component : viewFTCAL.getDetectorComponents()) {
                 keyToRow[component]=irow;            
                 ccdbTable.addRow(summaryInitialValues,1,1,component);
+                //System.out.println("TABCCDB component: "+component);
                 irow++;  
         }
     }
@@ -428,7 +431,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
 
  
     private void updateCCDBTable() {
-        System.out.println("ERICA CCDB2 TABLE");
+        
         for(int key : viewFTCAL.getDetectorComponents()) {
             //String status   = String.format ("%.1f", ftNoise.getFieldValue("Status", key));
             String status   = String.format ("%d", (int)ftNoise.getFieldValue("Status", key));
@@ -441,8 +444,8 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
             String mips     = String.format ("%.2f", ftGamma.getFieldValue("<E>", key));
             String emips    = String.format ("%.2f", ftGamma.getFieldValue("\u03C3(E)", key));
             String chi2     = String.format ("%.2f", ftGamma.getFieldValue("\u03C7\u00B2(E)", key));
-            String time     = String.format ("%.2f", ftGamma.getFieldValue("<T>", key));
-            String stime    = String.format ("%.2f", ftGamma.getFieldValue("\u03C3(T)", key));
+            String time     = String.format ("%.3f", ftGamma.getFieldValue("<T>", key));
+            String stime    = String.format ("%.3f", ftGamma.getFieldValue("\u03C3(T)", key));
             String thr      = String.format ("%.2f", ftGamma.getFieldValue("Threshold", key));
                                                                           // S, L, C //  
             ccdbTable.setValueAtAsDouble(0, Double.parseDouble(pedestal)  , 1, 1, key);
@@ -459,7 +462,6 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
             //ccdbTable.setValueAtAsDouble(10,Double.parseDouble(status)    , 1, 1, key);  
             ccdbTable.setValueAtAsDouble(10,Integer.parseInt(status)      , 1, 1, key);  
             ccdbTable.setValueAtAsDouble(11,Double.parseDouble(thr)       , 1, 1, key);
-            
         }
     }
     
