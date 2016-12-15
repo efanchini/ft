@@ -48,6 +48,7 @@ import org.clas.tools.HipoFile;
 import org.clas.tools.Miscellaneous;
 import org.clas.tools.NoGridCanvas;
 import org.jlab.clas.detector.DetectorCollection;
+import org.jlab.evio.clas12.EvioDataEvent;
 import org.root.group.SpringUtilities;
 
 
@@ -327,15 +328,23 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
         eFADCFitter.setPulseRange(pul_i1, pul_i2);
     }
 
-    public void processDecodedEvent() {
+//    public void processDecodedEvent() {
+//        nProcessed++;
+//        if(nProcessed>0)freezeGammaSel();
+//        List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
+//        this.ftEvent.addEvent(counters);
+//        this.ftNoise.addEvent(counters);
+//        this.ftGamma.addEvent(counters);
+//        this.ftEvent.updateCanvas(keySelect);
+//        this.view.repaint();
+//    }    
+    
+   public EvioDataEvent processDecodedEvent() {
         nProcessed++;
         if(nProcessed>0)freezeGammaSel();
         List<DetectorCounter> counters = decoder.getDetectorCounters(DetectorType.FTCAL);
-        this.ftEvent.addEvent(counters);
-        this.ftNoise.addEvent(counters);
-        this.ftGamma.addEvent(counters);
-        this.ftEvent.updateCanvas(keySelect);
-        this.view.repaint();
+        EvioDataEvent event = this.ftGamma.addEvent(counters);
+        return event;
     }    
     
     public void processDecodedSimEvent(DetectorCollection<Double> adc, DetectorCollection<Double> tdc) {
@@ -367,8 +376,7 @@ public class FTCALGamma implements IDetectorListener,ActionListener,ChangeListen
            
     }
 
-    public void update(DetectorShape2D shape) {
-    
+    public void update(DetectorShape2D shape) { 
         int sector = shape.getDescriptor().getSector();
         int layer = shape.getDescriptor().getLayer();
         int paddle = shape.getDescriptor().getComponent();

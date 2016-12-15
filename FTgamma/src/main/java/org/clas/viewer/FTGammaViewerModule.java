@@ -10,11 +10,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import javax.accessibility.AccessibleContext;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import static kotlin.io.IoPackage.reader;
 
 
 import org.clas.ftcal.FTCALGamma;
@@ -22,12 +25,14 @@ import org.clas.ftcal.FTCALDetector;
 import org.clas.ftcal.FTCALSimulatedData;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
+import org.jlab.clas.detector.DetectorRawData;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.basic.IDetectorModule;
 import org.jlab.clas12.basic.IDetectorProcessor;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clasrec.main.DetectorEventProcessorPane;
 import org.jlab.data.io.DataEvent;
+import org.jlab.evio.clas12.EvioDataBank;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.jlab.evio.clas12.EvioSource;
 import org.root.attr.ColorPalette;
@@ -47,7 +52,8 @@ public class FTGammaViewerModule implements IDetectorProcessor, IDetectorModule,
     EventDecoder decoder = new EventDecoder();
     int nProcessed = 0;
     FTCALDetector viewFTCAL = new FTCALDetector("FTCAL");            
-    FTCALSimulatedData simulation = new FTCALSimulatedData(viewFTCAL);
+    //FTCALSimulatedData simulation = new FTCALSimulatedData(viewFTCAL);
+    FTCALSimulatedData simulation = new FTCALSimulatedData();
     
     // ColorPalette class defines colors 
     ColorPalette palette = new ColorPalette();
@@ -113,19 +119,23 @@ public class FTGammaViewerModule implements IDetectorProcessor, IDetectorModule,
 
     
     public void processEvent(DataEvent de) {
+        
         EvioDataEvent event = (EvioDataEvent) de;
-        if(event.hasBank("FTCAL::dgtz")){
-            simulation.eventBankDecoder(event,"FTCAL::dgtz");
-            DetectorCollection<Double> adc = this.simulation.getSimAdc();
-            DetectorCollection<Double> tdc = this.simulation.getSimTdc();
-            moduleFTCAL.processDecodedSimEvent(adc,tdc);  
-        }
+        if(event.hasBank("FTCAL::dgtz"))readFTCalDgtzBank(event);
         else{
-        decoder.decode(event);
-        moduleFTCAL.processDecodedEvent();  
+            decoder.decode(event);           
+            EvioDataEvent event2 = moduleFTCAL.processDecodedEvent();  
+            readFTCalDgtzBank(event2);
         }
         nProcessed++;
         if((nProcessed%5000)==0)System.out.println("Decoded Event: "+nProcessed);
+    }
+    
+    private void readFTCalDgtzBank(EvioDataEvent event){
+             simulation.eventBankDecoder(event,"FTCAL::dgtz");
+            DetectorCollection<Double> adc = this.simulation.getSimAdc();
+            DetectorCollection<Double> tdc = this.simulation.getSimTdc();
+            moduleFTCAL.processDecodedSimEvent(adc,tdc);  
     }
 
         

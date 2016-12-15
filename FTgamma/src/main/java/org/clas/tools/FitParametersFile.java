@@ -31,7 +31,8 @@ public class FitParametersFile {
     private  PrintWriter file;
     private ArrayList<DetectorCollection<F1D>> fct   = new ArrayList<DetectorCollection<F1D>>();
     private ArrayList<DetectorCollection<H1D>> histo = new ArrayList<DetectorCollection<H1D>>();
-    
+    public Boolean flagCalibFileExist = false; 
+
     
     public FitParametersFile(){  
     }
@@ -179,84 +180,85 @@ public class FitParametersFile {
          
         }
     }  
+             
             
-            
-public void readCCDBFiles() throws IOException{
-     String[] fileIn = new String[2];
-        fileIn[0] ="/project/Gruppo3/fiber6/fanchini/JLab/FwdT/analysis/ft/FTgamma/ftcal_time_offset.txt";
-        fileIn[1] ="/project/Gruppo3/fiber6/fanchini/JLab/FwdT/analysis/ft/FTgamma/ftcal_time_offset_Raffa.txt";
+public ArrayList<DetectorCollection> readCCDBFiles() throws IOException{
+     String[] fileIn = new String[1];
+        fileIn[0] ="/project/Gruppo3/fiber6/fanchini/JLab/FwdT/analysis/ft/FTgamma/ftcal_time_offset_AllFiles.txt";
+        //fileIn[1] ="/project/Gruppo3/fiber6/fanchini/JLab/FwdT/analysis/ft/FTgamma/ftcal_time_offset_Raffa.txt";
         
+        ArrayList<DetectorCollection> aldc = null;
         for(int i=0; i<fileIn.length; i++){
-            System.out.println("ERICA1: "+fileIn[i]);
-            readFile(fileIn[i]);
+            System.out.println("Read Calibration constant file: "+i+"  "+fileIn[i]);
+            aldc = readFile(fileIn[i]);
         }
-        
-        
+        return aldc;    
 }
 
     private ArrayList<DetectorCollection> readFile(String file) throws IOException{
         
+        Boolean fexist = false;
         ArrayList<DetectorCollection> values = new ArrayList<DetectorCollection>();
-        DetectorCollection dc = new DetectorCollection();
-        ArrayList al = new ArrayList();
-                
         BufferedReader br = null;
             try {
                File ff = new File(file);
                if(ff.exists()){
-                FileReader fin = new FileReader(file);
-                br = new BufferedReader(fin);
+                    fexist = true;
+                    FileReader fin = new FileReader(file);
+                    br = new BufferedReader(fin);
+                            StringBuilder sb = new StringBuilder();
+                    String line = br.readLine();// Titles
+                    String[] title=line.split("\t");
+
+                    Integer nl=0, ni=0; Double nd=0.0;
+                    String[] scol = null;
+                    Integer comp=0;
+                    ArrayList<List> ch = new ArrayList<List>();
+                    String tt ="";
+                    while (line != null) {
+                        sb.append(line);
+                        sb.append(System.lineSeparator());
+                        line = br.readLine();
+                        if(line != null){
+                            scol = line.split("\t");
+                            int nc=0;
+                            for(int i=2; i<scol.length; i++){
+                            if(nl==0){
+                                values.add(new DetectorCollection());
+                                values.get(i-2).setName(title[i]);
+                            }
+                            if(i==2){
+                                comp=Integer.parseInt((String)scol[i]);
+                            }
+                            else{  
+                                values.get(i-3).add(0, 0, comp, scol[i]);
+                            }
+                            nc++;
+                        }
+                        nl++;
+                        }
+                    }
+                }
+                else {
+                   values = null;
+                   fexist = false;                
                }
             } catch (FileNotFoundException ex) {
                 ex.printStackTrace();
             }
-            StringBuilder sb = new StringBuilder();
-            String line = br.readLine();
-            Integer nl=0, ni=0; Double nd=0.0;
-            String[] scol = null;
-            Integer comp=0;
-            ArrayList<List> ch = new ArrayList<List>();
-            String tt ="";
-            while (line != null) {
-                sb.append(line);
-                sb.append(System.lineSeparator());
-                line = br.readLine();
-//                if(nl==0){
-//                    System.out.println("ERICA: "+line);
-//                        }
-            if(line != null){
-               scol = line.split("\t");
-               int nc=0;
-                for(int i=2; i<scol.length; i++){
-                    if(i==2){
-                        comp=Integer.parseInt((String)scol[i]);
-                    }
-                  al.add(nc, scol[i]);      
-                 System.out.println("ERICA1: "+i+"  "+scol[i]);
-                 nc++;
-               }
-                
-            nl++;
-            }
-           }
-//            for(int c=0; c<scol.length; c++){
-//                    values.add(c, dc);
+
+            
+//            for(int i=0; i<values.size();i++){
+//                System.out.println("Erica: "+i+"  "+values.get(i).getName());
+//                for (Iterator it = values.get(i).getComponents(0, 0).iterator(); it.hasNext();) {
+//                    Integer j = (Integer) it.next();
+//                //System.out.println("  ERICA 2: "+i+"  "+j+"  "+values.get(i).get(0, 0, j));
+//                } 
 //            }
-            
-            for(int i=0; i<values.size();i++){
-                System.out.println("Erica: "+i+"  "+values.get(i).getName());
-            for (Iterator it = values.get(i).getComponents(0, 0).iterator(); it.hasNext();) {
-                Integer j = (Integer) it.next();
-                System.out.println("  ERICA 2: "+i+"  "+j+"  "+values.get(i).get(0, 0, j));
-            } 
-            
-            }
-            
+            this.flagCalibFileExist = fexist;
             return values;
     }
  
-    
-            
- 
+
     
 }

@@ -72,6 +72,8 @@ public class FTCALEventApp extends FTApplication {
     }
     
     
+    
+    
     public void addSimEvent(DetectorCollection<Double> adc) { 
         realflag=false;
         H_WMAX.reset();
